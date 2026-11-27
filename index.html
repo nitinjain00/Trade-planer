@@ -1857,25 +1857,26 @@
             const entryP = parseFloat(pairMatches[0]);
             const currP = parseFloat(pairMatches[1]);
             if (entryP >= 1500 && entryP <= 9999 && currP >= 1500 && currP <= 9999) {
-              const prevLine = (lines[i - 1] || '').replace(/\bO\.(\d{2})\b/g, '0.$1');
-              const dirM = prevLine.match(/\b(b[uv6]?y|s[e3][l1iI]{2})\b/i);
+              const rawPrev = (lines[i - 1] || '')
+                .replace(/\b[Oo]\.([\dOo]{2})\b/g, (_, d) => '0.' + d.replace(/[Oo]/g, '0'))
+                .replace(/(\d)\.([\dOo]{2})\b/g, (_, a, d) => a + '.' + d.replace(/[Oo]/g, '0'));
+              // Strip trailing floating P/L on the far right (e.g. "-0.45", "119.16") so it is never mistaken for lot size
+              const leftPrev = rawPrev.replace(/\s+-?\d+\.\d{2}\s*$/, '');
+              const dirM = leftPrev.match(/\b(b[uv6]?y|s[e3][l1iI]{2})\b/i);
               let dir = null;
               if (dirM) {
                 dir = dirM[1].toLowerCase().startsWith('s') ? 'short' : 'long';
                 if (!detectedDirection) detectedDirection = dir;
               }
-              // Extract lot size from prevLine: prefer explicit side+lot, else first decimal before end-of-line P/L
+              // Extract lot size from the left portion only
               let lotVal = 0.01;
-              const explicitLot = prevLine.match(/\b(?:b[uv6]?y|s[e3][l1iI]{2})\s*(\d{1,2}\.\d{2})\b/i);
+              const explicitLot = leftPrev.match(/\b(?:b[uv6]?y|s[e3][l1iI]{2})\s*(\d{1,2}\.\d{2})\b/i);
               if (explicitLot) {
                 lotVal = parseFloat(explicitLot[1]);
               } else {
-                const nums = prevLine.match(/\b(\d{1,2}\.\d{2})\b/g);
-                if (nums && nums.length >= 2) {
-                  // First number is lot, last number is floating P/L
-                  lotVal = parseFloat(nums[0]);
-                } else if (nums && nums.length === 1 && parseFloat(nums[0]) <= 5) {
-                  lotVal = parseFloat(nums[0]);
+                const leftLot = leftPrev.match(/\b(\d{1,2}\.\d{2})\b/);
+                if (leftLot) {
+                  lotVal = parseFloat(leftLot[1]);
                 }
               }
               if (!(lotVal > 0 && lotVal <= 50)) lotVal = 0.01;
