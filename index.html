@@ -1,0 +1,2896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trade Planner · CFD &amp; Futures</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --gold-primary: #a37414;
+      --gold-dark: #8c620e;
+      --gold-accent: #b38219;
+      --gold-bg: #fbf7ec;
+      --gold-border: #eadfc2;
+      --blue-accent: #2563eb;
+      --red-accent: #b91c1c;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f3f4f6;
+      color: #111827;
+      -webkit-font-smoothing: antialiased;
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.2s ease;
+    }
+
+    body.mode-futures {
+      background-color: #0b0f14;
+      color: #f1f5f9;
+    }
+
+    /* Top Mode Switcher Bar */
+    .top-switcher-bar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      padding: 10px 12px;
+      backdrop-filter: blur(10px);
+      background: rgba(243, 244, 246, 0.88);
+      border-bottom: 1px solid #e5e7eb;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    body.mode-futures .top-switcher-bar {
+      background: rgba(11, 15, 20, 0.9);
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .top-switcher-inner {
+      max-width: 520px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding: 4px;
+      border-radius: 12px;
+      background: #e5e7eb;
+    }
+
+    body.mode-futures .top-switcher-inner {
+      background: #131a22;
+      border: 1px solid #232f3d;
+    }
+
+    .mode-tab-btn {
+      padding: 8px 10px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      background: transparent;
+      color: #4b5563;
+    }
+
+    body.mode-futures .mode-tab-btn {
+      color: #8b9bb0;
+    }
+
+    .mode-tab-btn.active-cfd {
+      background: #ffffff;
+      color: #8c620e;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .mode-tab-btn.active-futures {
+      background: #1e293b;
+      color: #34d399;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    }
+
+    /* CFD View Styles */
+    #cfdView .mono-num {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+    #cfdView .underline-input {
+      border: none;
+      border-bottom: 1.5px solid #d1d5db;
+      border-radius: 0;
+      background: transparent;
+      transition: border-color 0.15s ease;
+    }
+    #cfdView .underline-input:focus {
+      outline: none;
+      border-bottom-color: var(--gold-primary);
+    }
+    #cfdView .underline-input-blue:focus {
+      border-bottom-color: var(--blue-accent);
+    }
+    #cfdView .underline-input-red:focus {
+      border-bottom-color: var(--red-accent);
+    }
+    #cfdView input[type='number']::-webkit-inner-spin-button,
+    #cfdView input[type='number']::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    #cfdView input[type='number'] {
+      -moz-appearance: textfield;
+    }
+    #cfdView .accent-bar-gold { border-left: 3px solid var(--gold-accent); }
+    #cfdView .accent-bar-blue { border-left: 3px solid var(--blue-accent); }
+    #cfdView .accent-bar-red { border-left: 3px solid var(--red-accent); }
+    #cfdView .dropzone-active {
+      border-color: var(--gold-primary) !important;
+      background-color: #fdf9ee !important;
+    }
+
+    /* Scoped Futures View Styles */
+    #futuresView {
+      padding: 14px 12px 40px;
+    }
+    #futuresView .fut-dropzone {
+      display: block;
+      border: 1.5px dashed #2e3d4f;
+      border-radius: 12px;
+      padding: 14px 12px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(11, 15, 20, 0.55);
+      transition: border-color 0.15s, background 0.15s;
+      margin-bottom: 12px;
+    }
+    #futuresView .fut-dropzone:hover,
+    #futuresView .fut-dropzone.active-drop {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.08);
+    }
+    #futuresView .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+:root {
+      --bg: #0b0f14;
+      --card: #131a22;
+      --card-alt: #18212b;
+      --border: #232f3d;
+      --border-focus: #3b82f6;
+      --text: #f1f5f9;
+      --text-muted: #8b9bb0;
+      --text-dim: #5c6c80;
+      --green: #10b981;
+      --green-bg: rgba(16, 185, 129, 0.14);
+      --green-border: rgba(16, 185, 129, 0.45);
+      --red: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.14);
+      --red-border: rgba(239, 68, 68, 0.45);
+      --amber: #f59e0b;
+      --blue: #3b82f6;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+#futuresView .container {
+      max-width: 520px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+#futuresView .mono {
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+    }
+#futuresView /* Header */
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 2px 2px 4px;
+    }
+#futuresView .title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+#futuresView .subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+#futuresView .reset-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 11px;
+      border-radius: 8px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+#futuresView .reset-btn:hover {
+      background: var(--card-alt);
+      color: var(--text);
+    }
+#futuresView /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 15px;
+    }
+#futuresView .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+#futuresView /* Instrument Pills */
+    .pill-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+#futuresView .inst-pill {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 9px;
+      padding: 8px 4px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+#futuresView .inst-pill span.spec {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-dim);
+      font-family: var(--mono);
+    }
+#futuresView .inst-pill.active {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: var(--blue);
+      color: #93c5fd;
+    }
+#futuresView .inst-pill.active span.spec {
+      color: #bfdbfe;
+    }
+#futuresView .inst-spec-bar {
+      margin-top: 10px;
+      padding: 8px 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+#futuresView /* Custom Specs */
+    .custom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+#futuresView .hidden {
+      display: none !important;
+    }
+#futuresView /* Direction Toggle */
+    .dir-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+#futuresView .dir-btn {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+#futuresView .dir-btn.active-buy {
+      background: var(--green-bg);
+      border-color: var(--green-border);
+      color: #34d399;
+    }
+#futuresView .dir-btn.active-sell {
+      background: var(--red-bg);
+      border-color: var(--red-border);
+      color: #f87171;
+    }
+#futuresView /* Inputs */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+#futuresView .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+#futuresView .field.full {
+      grid-column: 1 / -1;
+    }
+#futuresView .field label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+#futuresView .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+#futuresView .input-prefix {
+      position: absolute;
+      left: 11px;
+      font-size: 13px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      pointer-events: none;
+    }
+#futuresView .input-suffix {
+      position: absolute;
+      right: 10px;
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      pointer-events: none;
+    }
+#futuresView input[type="number"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 10px 11px;
+      transition: border-color 0.15s;
+      -moz-appearance: textfield;
+    }
+#futuresView input[type="number"]::-webkit-inner-spin-button, #futuresView input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+#futuresView input[type="number"]:focus {
+      outline: none;
+      border-color: var(--border-focus);
+    }
+#futuresView input.has-prefix {
+      padding-left: 24px;
+    }
+#futuresView input.has-suffix {
+      padding-right: 40px;
+    }
+#futuresView /* Quick Target Pills */
+    .quick-targets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+#futuresView .qt-btn {
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      color: #cbd5e1;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+#futuresView .qt-btn:hover {
+      border-color: var(--blue);
+      color: #fff;
+    }
+#futuresView /* Contract Stepper */
+    .stepper {
+      display: flex;
+      align-items: center;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      overflow: hidden;
+    }
+#futuresView .step-btn {
+      width: 40px;
+      height: 40px;
+      background: var(--card-alt);
+      border: none;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+#futuresView .step-btn:hover {
+      background: #232f3d;
+    }
+#futuresView .stepper input[type="number"] {
+      border: none;
+      border-radius: 0;
+      text-align: center;
+      padding: 9px 4px;
+      background: transparent;
+    }
+#futuresView /* Fee toggle row */
+    .fee-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+#futuresView .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+#futuresView .toggle-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--blue);
+      cursor: pointer;
+    }
+#futuresView .fee-input-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 118px;
+    }
+#futuresView /* Hero Output Card */
+    .hero-card {
+      background: linear-gradient(145deg, #131c26 0%, #0f161f 100%);
+      border: 1px solid #283749;
+      border-radius: 14px;
+      padding: 16px;
+    }
+#futuresView .hero-card.buy-glow {
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+#futuresView .hero-card.sell-glow {
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+#futuresView .hero-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+#futuresView .hero-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+#futuresView .copy-btn {
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+#futuresView .copy-btn:hover {
+      border-color: var(--blue);
+      background: rgba(59, 130, 246, 0.15);
+    }
+#futuresView .copy-btn.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+#futuresView .hero-price {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 6px 0 4px;
+      line-height: 1.1;
+    }
+#futuresView .hero-price.buy-text { color: #34d399; }
+#futuresView .hero-price.sell-text { color: #f87171; }
+#futuresView .hero-price.neutral-text { color: var(--text-dim); }
+#futuresView .hero-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+#futuresView .warn-banner {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: #fbbf24;
+      font-size: 12px;
+    }
+#futuresView /* Breakdown Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+#futuresView .stat-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 11px;
+    }
+#futuresView .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+#futuresView .stat-val {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text);
+    }
+#futuresView .stat-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+#futuresView .text-green { color: #34d399; }
+#futuresView .text-red { color: #f87171; }
+#futuresView .text-amber { color: #fbbf24; }
+#futuresView /* Comparison Table */
+    .table-wrap {
+      overflow-x: auto;
+    }
+#futuresView table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+#futuresView th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 7px 6px;
+      border-bottom: 1px solid var(--border);
+    }
+#futuresView th.num, #futuresView td.num {
+      text-align: right;
+    }
+#futuresView td {
+      padding: 9px 6px;
+      border-bottom: 1px solid rgba(35, 47, 61, 0.55);
+      color: var(--text);
+    }
+#futuresView tr:last-child td {
+      border-bottom: none;
+    }
+#futuresView tr.active-row {
+      background: rgba(59, 130, 246, 0.12);
+    }
+#futuresView tr.active-row td:first-child {
+      color: #93c5fd;
+      font-weight: 700;
+    }
+#futuresView /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #f8fafc;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 999px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 50;
+    }
+#futuresView .toast.show {
+      opacity: 1;
+    }
+
+  
+  </style>
+</head>
+<body>
+  <!-- Top App Switcher -->
+  <nav class="top-switcher-bar" aria-label="Calculator Mode">
+    <div class="top-switcher-inner">
+      <button id="tabCfdBtn" type="button" class="mode-tab-btn active-cfd">CFD · Gold Planner</button>
+      <button id="tabFuturesBtn" type="button" class="mode-tab-btn">Futures · Target Bal</button>
+    </div>
+  </nav>
+
+  <!-- CFD View -->
+  <div id="cfdView" class="py-5 px-4 sm:py-7">
+
+  <main class="max-w-[460px] mx-auto">
+    <!-- App Header -->
+    <header class="mb-5">
+      <h1 class="text-[28px] sm:text-[32px] font-extrabold tracking-tight text-gray-900 leading-tight">
+        Gold Trade Planner
+      </h1>
+
+      <div class="mt-3 flex items-center justify-between gap-2 flex-wrap">
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Direction Selector -->
+          <div class="relative inline-block">
+            <select
+              id="directionSelect"
+              aria-label="Trade direction"
+              class="appearance-none bg-[#ebe6d9] hover:bg-[#e4decb] text-[#8c620e] font-semibold text-sm pl-3.5 pr-8 py-2 rounded-xl border border-[#dcd5c3] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#b38219]/30 transition-colors"
+            >
+              <option value="long">Long (Buy)</option>
+              <option value="short">Short (Sell)</option>
+            </select>
+            <svg
+              class="w-4 h-4 text-[#8c620e] pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+
+
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span id="saveStatus" class="text-[11px] font-medium text-gray-400"></span>
+          <button
+            id="resetBtn"
+            type="button"
+            class="text-xs font-medium text-gray-500 hover:text-gray-800 px-2.5 py-1.5 rounded-lg hover:bg-gray-200/60 transition-colors"
+            title="Clear all entries"
+          >
+            Clear all
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Planner Card -->
+    <section class="bg-white rounded-2xl shadow-[0_2px_16px_rgba(0,0,0,0.05)] border border-gray-100 p-5 sm:p-6 space-y-6">
+      <!-- Section 1: Your entries + Check P/L -->
+      <div class="accent-bar-gold pl-4 space-y-5">
+        <!-- Entries Header -->
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-[#a37414] shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13h4v8H3v-8zm7-6h4v14h-4V7zm7-4h4v18h-4V3z" />
+          </svg>
+          <h2 class="text-[15px] font-bold text-gray-900">Your entries</h2>
+        </div>
+
+        <!-- Fill from Screenshot Dropzone (native label for reliable mobile/Chrome file picker) -->
+        <div class="space-y-2">
+          <label
+            id="dropzone"
+            for="screenshotInput"
+            class="block border-[1.5px] border-dashed border-gray-300 rounded-xl px-4 py-5 text-center cursor-pointer hover:border-[#b38219] hover:bg-[#fdfaf2] transition-colors"
+          >
+            <input id="screenshotInput" type="file" accept="image/*" class="sr-only" />
+            <div id="dropzoneIdle" class="space-y-1">
+              <div class="flex items-center justify-center gap-1.5 text-[#a37414] font-semibold text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 15l-5-5L5 21" />
+                </svg>
+                <span>Fill from screenshot</span>
+              </div>
+              <p class="text-xs text-gray-500">Tap to upload, drag, or paste (Ctrl+V) a screenshot</p>
+            </div>
+            <div id="dropzoneStatus" class="hidden space-y-2">
+              <div class="flex items-center justify-center gap-2 text-sm font-medium text-[#8c620e]">
+                <svg id="ocrSpinner" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+                <span id="dropzoneStatusText">Reading screenshot...</span>
+              </div>
+              <p id="dropzoneSubText" class="text-xs text-gray-500"></p>
+            </div>
+          </label>
+          <div class="flex justify-end">
+            <button id="togglePasteTextBtn" type="button" class="text-xs font-medium text-[#a37414] hover:underline">
+              Or paste trade text
+            </button>
+          </div>
+          <div id="pasteTextBox" class="hidden space-y-2 bg-gray-50 border border-gray-200 rounded-xl p-3">
+            <textarea
+              id="pasteTextArea"
+              rows="3"
+              placeholder="Paste broker lines, e.g.&#10;buy 0.01 at 3862.96&#10;buy 0.01 at 3860.29"
+              class="w-full text-xs mono-num bg-white border border-gray-200 rounded-lg p-2 focus:outline-none focus:border-[#b38219]"
+            ></textarea>
+            <div class="flex justify-end gap-2">
+              <button id="cancelPasteTextBtn" type="button" class="text-xs px-2.5 py-1 rounded-lg text-gray-600 hover:bg-gray-200">Cancel</button>
+              <button id="applyPasteTextBtn" type="button" class="text-xs px-3 py-1 rounded-lg bg-[#a37414] text-white font-semibold hover:bg-[#8c620e]">Fill entries</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column Headers -->
+        <div class="grid grid-cols-[1fr_1.15fr_28px] gap-3 text-xs font-medium text-gray-500 pt-1">
+          <span id="sizeColHeader">Lot size</span>
+          <span>Entry price</span>
+          <span></span>
+        </div>
+
+        <!-- Dynamic Entry Rows -->
+        <div id="entriesContainer" class="space-y-3"></div>
+
+        <!-- Add Entry & Quick Lot Pills -->
+        <div class="pt-1 space-y-3">
+          <button
+            id="addEntryBtn"
+            type="button"
+            class="inline-flex items-center gap-1.5 text-sm font-semibold text-[#a37414] hover:text-[#7c560b] transition-colors"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14" />
+            </svg>
+            <span>Add entry</span>
+          </button>
+
+          <div id="quickLotGroup" class="flex flex-wrap gap-2">
+            <button type="button" data-quick-lot="0.01" class="quick-lot-btn px-3.5 py-1.5 rounded-lg bg-[#fdf9ee] hover:bg-[#f7efd8] border border-[#e8dec4] text-[#9a6f14] font-semibold text-sm mono-num transition-colors">
+              +0.01
+            </button>
+            <button type="button" data-quick-lot="0.05" class="quick-lot-btn px-3.5 py-1.5 rounded-lg bg-[#fdf9ee] hover:bg-[#f7efd8] border border-[#e8dec4] text-[#9a6f14] font-semibold text-sm mono-num transition-colors">
+              +0.05
+            </button>
+            <button type="button" data-quick-lot="0.10" class="quick-lot-btn px-3.5 py-1.5 rounded-lg bg-[#fdf9ee] hover:bg-[#f7efd8] border border-[#e8dec4] text-[#9a6f14] font-semibold text-sm mono-num transition-colors">
+              +0.10
+            </button>
+            <button type="button" data-quick-lot="0.25" class="quick-lot-btn px-3.5 py-1.5 rounded-lg bg-[#fdf9ee] hover:bg-[#f7efd8] border border-[#e8dec4] text-[#9a6f14] font-semibold text-sm mono-num transition-colors">
+              +0.25
+            </button>
+          </div>
+
+          <p class="text-xs text-gray-500 leading-relaxed">
+            Price field: after the first entry, type just the last digits — e.g. if price is 2450, typing "65" fills 2465.
+          </p>
+        </div>
+
+        <hr class="border-gray-100" />
+
+        <!-- Check P/L at any price -->
+        <div class="space-y-2.5">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#a37414] shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="7" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35" />
+            </svg>
+            <label for="checkPriceInput" class="text-[15px] font-bold text-gray-900">Check P/L at any price</label>
+          </div>
+
+          <div class="relative flex items-center">
+            <input
+              id="checkPriceInput"
+              type="number"
+              step="0.01"
+              inputmode="decimal"
+              placeholder="e.g. 2470"
+              class="underline-input w-full pr-12 py-1.5 text-lg mono-num text-gray-900 placeholder:text-gray-400"
+            />
+            <span class="absolute right-0 text-xs font-medium text-gray-400 pointer-events-none">price</span>
+          </div>
+
+          <div id="checkPlOutput" class="pt-0.5 text-base font-bold mono-num text-[#a37414]">
+            —
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Profit target (TP) -->
+      <div class="accent-bar-blue pl-4 space-y-3">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#2563eb] shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9" />
+              <circle cx="12" cy="12" r="5" />
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+            </svg>
+            <h2 class="text-[15px] font-bold text-gray-900">Profit target (TP)</h2>
+          </div>
+
+          <!-- Mode Toggle: Profit $ vs Target Balance $ -->
+          <div class="inline-flex rounded-lg bg-gray-100 p-0.5 border border-gray-200">
+            <button
+              id="modeProfitBtn"
+              type="button"
+              class="px-2.5 py-1 text-xs font-semibold rounded-md bg-white text-[#2563eb] shadow-sm transition-colors"
+            >
+              Profit $
+            </button>
+            <button
+              id="modeBalanceBtn"
+              type="button"
+              class="px-2.5 py-1 text-xs font-semibold rounded-md text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Target Bal $
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode A: Direct Profit USD -->
+        <div id="tpProfitPanel" class="space-y-2">
+          <div class="relative flex items-center">
+            <input
+              id="tpUsdInput"
+              type="number"
+              step="0.01"
+              min="0"
+              inputmode="decimal"
+              placeholder="e.g. 150"
+              aria-label="Profit target in USD"
+              class="underline-input underline-input-blue w-full pr-12 py-1.5 text-lg mono-num text-gray-900 placeholder:text-gray-400"
+            />
+            <span class="absolute right-0 text-xs font-medium text-gray-400 pointer-events-none">USD</span>
+          </div>
+          <p class="text-xs text-gray-500 leading-relaxed">
+            Money you want to make. If left empty, TP is calculated using the Risk:Reward ratio below.
+          </p>
+        </div>
+
+        <!-- Mode B: Target Account Balance -->
+        <div id="tpBalancePanel" class="hidden space-y-2.5">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="relative flex items-center">
+              <input
+                id="currentBalInput"
+                type="number"
+                step="0.01"
+                min="0"
+                inputmode="decimal"
+                placeholder="e.g. 24321.64"
+                aria-label="Current account balance in USD"
+                class="underline-input underline-input-blue w-full pr-16 py-1.5 text-base sm:text-lg mono-num text-gray-900 placeholder:text-gray-400"
+              />
+              <span class="absolute right-0 text-[11px] font-medium text-gray-400 pointer-events-none">Curr Bal</span>
+            </div>
+
+            <div class="relative flex items-center">
+              <input
+                id="targetBalInput"
+                type="number"
+                step="0.01"
+                min="0"
+                inputmode="decimal"
+                placeholder="e.g. 25250"
+                aria-label="Target account balance in USD"
+                class="underline-input underline-input-blue w-full pr-16 py-1.5 text-base sm:text-lg mono-num text-gray-900 placeholder:text-gray-400"
+              />
+              <span class="absolute right-0 text-[11px] font-medium text-gray-400 pointer-events-none">Goal Bal</span>
+            </div>
+          </div>
+          <p id="balDiffHint" class="text-xs text-gray-500 leading-relaxed">
+            Enter your current balance (auto-filled from MT5 screenshots) and your goal balance.
+          </p>
+        </div>
+      </div>
+
+      <!-- Section 3: Risk & Stop Loss (SL) -->
+      <div class="accent-bar-red pl-4 space-y-2.5">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-[#b91c1c] shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.97-3.05 9.17-7 10-3.95-.83-7-5.03-7-10V6l7-3z" />
+          </svg>
+          <h2 class="text-[15px] font-bold text-gray-900">Risk &amp; Stop Loss (SL)</h2>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="relative flex items-center">
+            <input
+              id="maxLossInput"
+              type="number"
+              step="0.01"
+              min="0"
+              inputmode="decimal"
+                placeholder="25"
+              aria-label="Max Loss in USD"
+              class="underline-input underline-input-red w-full pr-20 py-1.5 text-lg mono-num text-gray-900 placeholder:text-gray-400"
+            />
+            <span class="absolute right-0 text-xs font-medium text-gray-400 pointer-events-none">Max Loss $</span>
+          </div>
+
+          <div class="relative flex items-center">
+            <input
+              id="rrInput"
+              type="number"
+              step="0.1"
+              min="0"
+              inputmode="decimal"
+              placeholder="2.0"
+              aria-label="Risk to Reward Ratio"
+              class="underline-input underline-input-red w-full pr-8 py-1.5 text-lg mono-num text-gray-900 placeholder:text-gray-400"
+            />
+            <span class="absolute right-0 text-xs font-medium text-gray-400 pointer-events-none">R:R</span>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-500 leading-relaxed">
+          Max money willing to lose. R:R (e.g., 2 = 1:2) determines TP if Profit amount is empty.
+        </p>
+      </div>
+
+      <!-- Output Cards -->
+      <div class="space-y-3 pt-1">
+        <!-- TP Result Card -->
+        <div class="bg-[#fbf7ec] border border-[#efe6cf] rounded-2xl p-5">
+          <div class="flex items-start justify-between gap-2">
+            <p class="text-sm font-medium text-gray-600">Set Take Profit (TP) at:</p>
+            <button
+              id="copyTpBtn"
+              type="button"
+              class="hidden text-xs font-semibold text-[#9a6f14] hover:text-[#704e09] bg-white/80 hover:bg-white px-2.5 py-1 rounded-lg border border-[#e8dec4] transition-colors"
+            >
+              Copy
+            </button>
+          </div>
+          <div id="tpPriceOutput" class="mt-1 text-[34px] sm:text-[38px] font-bold mono-num text-[#a37414] leading-none tracking-tight">
+            —
+          </div>
+          <p id="tpSubOutput" class="mt-2.5 text-xs sm:text-[13px] font-medium text-gray-600 leading-snug">
+            Enter at least one position and a profit target.
+          </p>
+        </div>
+
+        <!-- SL Result Card -->
+        <div id="slCard" class="bg-[#fef6f6] border border-[#f5d5d5] rounded-2xl p-4 sm:p-5">
+          <div class="flex items-start justify-between gap-2">
+            <p class="text-sm font-medium text-gray-600">Set Stop Loss (SL) at:</p>
+            <button
+              id="copySlBtn"
+              type="button"
+              class="hidden text-xs font-semibold text-[#b91c1c] hover:text-[#8a1313] bg-white/80 hover:bg-white px-2.5 py-1 rounded-lg border border-[#f2c4c4] transition-colors"
+            >
+              Copy
+            </button>
+          </div>
+          <div id="slPriceOutput" class="mt-1 text-[28px] sm:text-[32px] font-bold mono-num text-[#b91c1c] leading-none tracking-tight">
+            —
+          </div>
+          <p id="slSubOutput" class="mt-2 text-xs sm:text-[13px] font-medium text-gray-600 leading-snug">
+            Enter Max Loss $ to calculate your stop loss.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Subtle Toast Notification -->
+    <div
+      id="toast"
+      class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity duration-200 z-50"
+    ></div>
+  </main>
+
+  
+  </div>
+
+  <!-- Futures View -->
+  <div id="futuresView" class="hidden">
+
+  <main class="container">
+    <!-- Header -->
+    <header class="header">
+      <div>
+        <h1 class="title">Futures Target Level</h1>
+        <p class="subtitle">Exact tick-aligned TP to hit your target balance</p>
+      </div>
+      <button id="fut_resetBtn" type="button" class="reset-btn">Reset</button>
+    </header>
+
+    <!-- Instrument Selector -->
+    <section class="card">
+      <div class="section-label">
+        <span>Instrument</span>
+        <span id="fut_saveBadge" class="mono" style="font-size: 10px; color: var(--text-dim);"></span>
+      </div>
+
+      <div id="fut_instPills" class="pill-grid">
+        <button type="button" class="inst-pill active" data-inst="MGC">MGC<span class="spec">$10/pt</span></button>
+        <button type="button" class="inst-pill" data-inst="GC">GC<span class="spec">$100/pt</span></button>
+        <button type="button" class="inst-pill" data-inst="MNQ">MNQ<span class="spec">$2/pt</span></button>
+        <button type="button" class="inst-pill" data-inst="NQ">NQ<span class="spec">$20/pt</span></button>
+        <button type="button" class="inst-pill" data-inst="MES">MES<span class="spec">$5/pt</span></button>
+        <button type="button" class="inst-pill" data-inst="ES">ES<span class="spec">$50/pt</span></button>
+        <button type="button" class="inst-pill" data-inst="CUSTOM" style="grid-column: span 2;">Custom<span class="spec">$/pt &amp; tick</span></button>
+      </div>
+
+      <div id="fut_customSpecRow" class="custom-grid hidden">
+        <div class="field">
+          <label for="fut_customPtVal">Dollar per Point ($)</label>
+          <div class="input-wrap">
+            <span class="input-prefix">$</span>
+            <input id="fut_customPtVal" type="number" step="0.5" min="0.01" inputmode="decimal" class="has-prefix" placeholder="10" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="fut_customTickSize">Tick Size</label>
+          <input id="fut_customTickSize" type="number" step="0.01" min="0.0001" inputmode="decimal" placeholder="0.10" />
+        </div>
+      </div>
+
+      <div id="fut_instSpecBar" class="inst-spec-bar mono">
+        <span>Point: $10.00</span>
+        <span>Tick: 0.10 ($1.00)</span>
+      </div>
+    </section>
+
+    <!-- Position & Balance Inputs -->
+    <section class="card">
+      <label id="fut_dropzone" for="fut_screenshotInput" class="fut-dropzone">
+        <input id="fut_screenshotInput" type="file" accept="image/*" class="sr-only" />
+        <div id="fut_dropIdle">
+          <div style="font-size: 13px; font-weight: 700; color: #60a5fa;">Fill from Tradovate screenshot</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Tap to upload or drag a position screenshot (reads Equity, Side, Qty, Entry)</div>
+        </div>
+        <div id="fut_dropStatus" class="hidden">
+          <div id="fut_dropStatusText" style="font-size: 13px; font-weight: 700; color: #34d399;">Scanning screenshot...</div>
+          <div id="fut_dropSubText" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;"></div>
+        </div>
+      </label>
+
+      <div class="dir-toggle">
+        <button id="fut_buyBtn" type="button" class="dir-btn active-buy">BUY (Long)</button>
+        <button id="fut_sellBtn" type="button" class="dir-btn">SELL (Short)</button>
+      </div>
+
+      <div class="input-grid">
+        <div class="field">
+          <label for="fut_currentBalInput">Current Balance ($)</label>
+          <div class="input-wrap">
+            <span class="input-prefix">$</span>
+            <input id="fut_currentBalInput" type="number" step="0.01" inputmode="decimal" class="has-prefix" placeholder="25936" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fut_targetBalInput">Target Balance ($)</label>
+          <div class="input-wrap">
+            <span class="input-prefix">$</span>
+            <input id="fut_targetBalInput" type="number" step="0.01" inputmode="decimal" class="has-prefix" placeholder="26501" />
+          </div>
+        </div>
+
+        <div class="field full">
+          <div class="quick-targets">
+            <button type="button" class="qt-btn" data-add-bal="1500">+$1,500</button>
+            <button type="button" class="qt-btn" data-add-bal="3000">+$3,000</button>
+            <button type="button" class="qt-btn" data-add-bal="6000">+$6,000</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fut_entryPriceInput">Entry Price</label>
+          <input id="fut_entryPriceInput" type="number" step="0.01" inputmode="decimal" placeholder="3615.8" />
+        </div>
+
+        <div class="field">
+          <label for="fut_contractsInput">Contracts</label>
+          <div class="stepper">
+            <button id="fut_decContractBtn" type="button" class="step-btn" aria-label="Decrease contracts">-</button>
+            <input id="fut_contractsInput" type="number" step="1" min="1" inputmode="numeric" value="2" />
+            <button id="fut_incContractBtn" type="button" class="step-btn" aria-label="Increase contracts">+</button>
+          </div>
+        </div>
+
+        <div class="field full">
+          <label for="fut_slPointsInput">Optional Stop Loss (Absolute Points)</label>
+          <div class="input-wrap">
+            <input id="fut_slPointsInput" type="number" step="0.1" min="0" inputmode="decimal" class="has-suffix" placeholder="e.g. 5.0" />
+            <span class="input-suffix">pts</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fee-row">
+        <label class="toggle-label">
+          <input id="fut_includeFeesCheck" type="checkbox" checked />
+          <span>Include round-turn fees</span>
+        </label>
+        <div class="fee-input-box">
+          <div class="input-wrap" style="width: 100%;">
+            <span class="input-prefix">$</span>
+            <input id="fut_commPerContractInput" type="number" step="0.05" min="0" inputmode="decimal" class="has-prefix has-suffix" style="padding-top: 6px; padding-bottom: 6px; font-size: 13px;" />
+            <span class="input-suffix">/ct</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hero Output Card -->
+    <section id="fut_heroCard" class="hero-card buy-glow">
+      <div class="hero-top">
+        <span class="hero-title">TICK-ALIGNED TARGET TP PRICE</span>
+        <button id="fut_copyTpBtn" type="button" class="copy-btn">Copy TP</button>
+      </div>
+      <div id="fut_heroTpPrice" class="hero-price mono buy-text">—</div>
+      <div id="fut_heroTpSub" class="hero-sub">Enter balance, target, entry price, and contracts.</div>
+      <div id="fut_heroWarn" class="warn-banner hidden"></div>
+    </section>
+
+    <!-- Check P/L at Custom Price -->
+    <section class="card">
+      <div class="section-label"><span>Check P/L at Custom Price</span></div>
+      <div class="field">
+        <div class="input-wrap">
+          <input id="fut_checkPriceInput" type="number" step="0.01" inputmode="decimal" class="has-suffix" placeholder="Enter any exit price (e.g. 3605.0)" />
+          <span class="input-suffix">price</span>
+        </div>
+      </div>
+      <div id="fut_checkPlBox" style="margin-top: 10px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;">
+        <div id="fut_checkPlVal" class="mono" style="font-size: 16px; font-weight: 700; color: var(--text-dim);">—</div>
+        <div id="fut_checkPlSub" class="mono" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Type any price level to see Net P/L (after fees), points, ticks, and projected balance.</div>
+      </div>
+    </section>
+
+    <!-- Breakdown Grid -->
+    <section class="card">
+      <div class="section-label"><span>Trade Breakdown</span></div>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">Net Profit Needed</div>
+          <div id="fut_statNetProfit" class="stat-val mono">—</div>
+          <div id="fut_statGrossProfit" class="stat-sub mono">Gross: —</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-label">Move Required</div>
+          <div id="fut_statPointsNeeded" class="stat-val mono">—</div>
+          <div id="fut_statTicksNeeded" class="stat-sub mono">Ticks: —</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-label">Total Fees &amp; Breakeven</div>
+          <div id="fut_statTotalFees" class="stat-val mono">—</div>
+          <div id="fut_statBreakeven" class="stat-sub mono">BE: —</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-label">Position Sensitivity</div>
+          <div id="fut_statDollarPerPt" class="stat-val mono">—</div>
+          <div id="fut_statDollarPerTick" class="stat-sub mono">Tick: —</div>
+        </div>
+      </div>
+
+      <!-- Optional SL Breakdown -->
+      <div id="fut_slStatsGrid" class="stats-grid hidden" style="margin-top: 8px;">
+        <div class="stat-box">
+          <div class="stat-label">Stop Loss Price</div>
+          <div id="fut_statSlPrice" class="stat-val mono text-red">—</div>
+          <div id="fut_statSlDist" class="stat-sub mono">—</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-label">Max Risk &amp; R:R</div>
+          <div id="fut_statSlRisk" class="stat-val mono text-red">—</div>
+          <div id="fut_statRrRatio" class="stat-sub mono">R:R: —</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contract Comparison Mini-Table -->
+    <section class="card">
+      <div class="section-label"><span>Contract Sizing Comparison</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Size</th>
+              <th class="num">$/Pt</th>
+              <th class="num">Pts Needed</th>
+              <th class="num">Target TP</th>
+            </tr>
+          </thead>
+          <tbody id="fut_compareBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="fut_toast" class="toast"></div>
+
+  
+  </div>
+
+  <script>
+    // Top Switcher Logic
+    (function () {
+      const TAB_KEY = 'trade_planner_active_tab_v1';
+      const tabCfdBtn = document.getElementById('tabCfdBtn');
+      const tabFuturesBtn = document.getElementById('tabFuturesBtn');
+      const cfdView = document.getElementById('cfdView');
+      const futuresView = document.getElementById('futuresView');
+
+      function setTab(mode) {
+        const isFut = mode === 'futures';
+        cfdView.classList.toggle('hidden', isFut);
+        futuresView.classList.toggle('hidden', !isFut);
+        document.body.classList.toggle('mode-futures', isFut);
+
+        tabCfdBtn.className = 'mode-tab-btn' + (!isFut ? ' active-cfd' : '');
+        tabFuturesBtn.className = 'mode-tab-btn' + (isFut ? ' active-futures' : '');
+
+        try {
+          localStorage.setItem(TAB_KEY, mode);
+        } catch (e) {}
+      }
+
+      tabCfdBtn.addEventListener('click', () => setTab('cfd'));
+      tabFuturesBtn.addEventListener('click', () => setTab('futures'));
+
+      let initial = 'cfd';
+      try {
+        if (localStorage.getItem(TAB_KEY) === 'futures') initial = 'futures';
+      } catch (e) {}
+      setTab(initial);
+    })();
+  </script>
+
+  <script>
+    // CFD Gold Trade Planner
+    (function () {
+
+      const INSTRUMENTS = {
+        XAUUSD: { type: 'cfd', multiplier: 100, unit: 'lot', colLabel: 'Lot size', pills: ['0.01', '0.05', '0.10', '0.25'], step: '0.01', placeholder: '0.01' },
+        MGC: { type: 'futures', multiplier: 10, unit: 'ct', colLabel: 'Contracts', pills: ['1', '2', '5', '10'], step: '1', placeholder: '1' },
+        GC: { type: 'futures', multiplier: 100, unit: 'ct', colLabel: 'Contracts', pills: ['1', '2', '5', '10'], step: '1', placeholder: '1' },
+        MNQ: { type: 'futures', multiplier: 2, unit: 'ct', colLabel: 'Contracts', pills: ['1', '2', '5', '10'], step: '1', placeholder: '1' },
+        NQ: { type: 'futures', multiplier: 20, unit: 'ct', colLabel: 'Contracts', pills: ['1', '2', '5', '10'], step: '1', placeholder: '1' },
+        MES: { type: 'futures', multiplier: 5, unit: 'ct', colLabel: 'Contracts', pills: ['1', '2', '5', '10'], step: '1', placeholder: '1' },
+        ES: { type: 'futures', multiplier: 50, unit: 'ct', colLabel: 'Contracts', pills: ['1', '2', '5', '10'], step: '1', placeholder: '1' },
+        CUSTOM: { type: 'futures', multiplier: 10, unit: 'ct', colLabel: 'Contracts', pills: ['1', '2', '5', '10'], step: '1', placeholder: '1' }
+      };
+
+      const STORAGE_KEY = 'gold_trade_planner_state_v2';
+
+      const defaultState = () => ({
+        direction: 'long',
+        instrument: 'XAUUSD',
+        customMultiplier: '10',
+        entries: [{ id: 1, lot: '', price: '' }],
+        nextId: 2,
+        checkPrice: '',
+        tpMode: 'profit',
+        tpUsd: '',
+        currentBal: '',
+        targetBal: '',
+        maxLossUsd: '',
+        rr: '',
+        totalPl: '',
+        openPl: '',
+        equity: '',
+        dailyGoal: ''
+      });
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return defaultState();
+          const parsed = JSON.parse(raw);
+          if (!parsed || !Array.isArray(parsed.entries) || parsed.entries.length === 0) {
+            return defaultState();
+          }
+          return {
+            direction: parsed.direction === 'short' ? 'short' : 'long',
+            instrument: 'XAUUSD',
+            customMultiplier: parsed.customMultiplier !== undefined ? String(parsed.customMultiplier) : '10',
+            entries: parsed.entries.map((e, idx) => ({
+              id: Number(e.id) || idx + 1,
+              lot: e.lot !== undefined ? String(e.lot) : '',
+              price: e.price !== undefined ? String(e.price) : ''
+            })),
+            nextId: Number(parsed.nextId) || parsed.entries.length + 1,
+            checkPrice: parsed.checkPrice !== undefined ? String(parsed.checkPrice) : '',
+            tpMode: parsed.tpMode === 'balance' ? 'balance' : 'profit',
+            tpUsd: parsed.tpUsd !== undefined ? String(parsed.tpUsd) : '',
+            currentBal: parsed.currentBal !== undefined ? String(parsed.currentBal) : '',
+            targetBal: parsed.targetBal !== undefined ? String(parsed.targetBal) : '',
+            maxLossUsd: parsed.maxLossUsd !== undefined ? String(parsed.maxLossUsd) : '',
+            rr: parsed.rr !== undefined ? String(parsed.rr) : '',
+            totalPl: parsed.totalPl !== undefined ? String(parsed.totalPl) : '',
+            openPl: parsed.openPl !== undefined ? String(parsed.openPl) : '',
+            equity: parsed.equity !== undefined ? String(parsed.equity) : '',
+            dailyGoal: parsed.dailyGoal !== undefined ? String(parsed.dailyGoal) : ''
+          };
+        } catch (e) {
+          return defaultState();
+        }
+      }
+
+      const saveStatusEl = document.getElementById('saveStatus');
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          if (saveStatusEl) saveStatusEl.textContent = 'Saved';
+        } catch (e) {
+          if (saveStatusEl) saveStatusEl.textContent = '';
+        }
+      }
+
+      let state = loadState();
+
+      const directionSelect = document.getElementById('directionSelect');
+      const resetBtn = document.getElementById('resetBtn');
+      const entriesContainer = document.getElementById('entriesContainer');
+      const addEntryBtn = document.getElementById('addEntryBtn');
+      const quickLotBtns = document.querySelectorAll('#cfdView .quick-lot-btn');
+      const checkPriceInput = document.getElementById('checkPriceInput');
+      const checkPlOutput = document.getElementById('checkPlOutput');
+      const modeProfitBtn = document.getElementById('modeProfitBtn');
+      const modeBalanceBtn = document.getElementById('modeBalanceBtn');
+      const tpProfitPanel = document.getElementById('tpProfitPanel');
+      const tpBalancePanel = document.getElementById('tpBalancePanel');
+      const tpUsdInput = document.getElementById('tpUsdInput');
+      const currentBalInput = document.getElementById('currentBalInput');
+      const targetBalInput = document.getElementById('targetBalInput');
+      const balDiffHint = document.getElementById('balDiffHint');
+      const maxLossInput = document.getElementById('maxLossInput');
+      const rrInput = document.getElementById('rrInput');
+      const tpPriceOutput = document.getElementById('tpPriceOutput');
+      const tpSubOutput = document.getElementById('tpSubOutput');
+      const copyTpBtn = document.getElementById('copyTpBtn');
+      const slCard = document.getElementById('slCard');
+      const slPriceOutput = document.getElementById('slPriceOutput');
+      const slSubOutput = document.getElementById('slSubOutput');
+      const copySlBtn = document.getElementById('copySlBtn');
+      const dropzone = document.getElementById('dropzone');
+      const screenshotInput = document.getElementById('screenshotInput');
+      const dropzoneIdle = document.getElementById('dropzoneIdle');
+      const dropzoneStatus = document.getElementById('dropzoneStatus');
+      const dropzoneStatusText = document.getElementById('dropzoneStatusText');
+      const dropzoneSubText = document.getElementById('dropzoneSubText');
+      const ocrSpinner = document.getElementById('ocrSpinner');
+      const toastEl = document.getElementById('toast');
+
+      let toastTimer = null;
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.remove('opacity-0');
+        toastEl.classList.add('opacity-100');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toastEl.classList.remove('opacity-100');
+          toastEl.classList.add('opacity-0');
+        }, 2200);
+      }
+
+      function copyText(text, label) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(
+            () => showToast(`Copied ${label}: ${text}`),
+            () => fallbackCopy(text, label)
+          );
+        } else {
+          fallbackCopy(text, label);
+        }
+      }
+
+      function fallbackCopy(text, label) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast(`Copied ${label}: ${text}`);
+        } catch (e) {
+          showToast('Copy failed');
+        }
+        document.body.removeChild(ta);
+      }
+
+      // Smart shorthand price completion:
+      // If first entry is e.g. 3862.96 (integer part "3862", length 4) and user types "65" or "65.40",
+      // prepend "38" -> "3865" or "3865.40".
+      function expandShorthandPrice(rawVal, index) {
+        const trimmed = String(rawVal || '').trim();
+        if (!trimmed || index === 0) return trimmed;
+        const firstPriceStr = String(state.entries[0]?.price || '').trim();
+        const firstInt = firstPriceStr.split('.')[0];
+        if (!firstInt || firstInt.length < 3 || !/^\d+$/.test(firstInt)) return trimmed;
+
+        const parts = trimmed.split('.');
+        const intPart = parts[0];
+        if (!/^\d+$/.test(intPart)) return trimmed;
+
+        if (intPart.length > 0 && intPart.length < firstInt.length) {
+          const prefixLen = firstInt.length - intPart.length;
+          const expandedInt = firstInt.slice(0, prefixLen) + intPart;
+          return parts.length > 1 ? `${expandedInt}.${parts[1]}` : expandedInt;
+        }
+        return trimmed;
+      }
+
+      function renderEntries(focusId = null, focusField = 'price') {
+        entriesContainer.innerHTML = '';
+        state.entries.forEach((entry, idx) => {
+          const row = document.createElement('div');
+          row.className = 'grid grid-cols-[1fr_1.15fr_28px] gap-3 items-center';
+
+          // Lot size input wrapper
+          const lotWrap = document.createElement('div');
+          lotWrap.className = 'relative flex items-center';
+          const lotInput = document.createElement('input');
+          lotInput.type = 'number';
+          const instCfg = INSTRUMENTS[state.instrument] || INSTRUMENTS.XAUUSD;
+          lotInput.step = instCfg.step;
+          lotInput.min = '0';
+          lotInput.inputMode = 'decimal';
+          lotInput.value = entry.lot;
+          lotInput.placeholder = instCfg.placeholder;
+          lotInput.setAttribute('aria-label', `Entry ${idx + 1} ${instCfg.colLabel.toLowerCase()}`);
+          lotInput.className = 'underline-input w-full pr-7 py-1.5 text-lg mono-num text-gray-900 placeholder:text-gray-300';
+          lotInput.addEventListener('input', (e) => {
+            entry.lot = e.target.value;
+            calculateAndRenderOutputs();
+          });
+
+          const lotSuffix = document.createElement('span');
+          lotSuffix.textContent = instCfg.unit;
+          lotSuffix.className = 'absolute right-0 text-xs font-medium text-gray-400 pointer-events-none';
+          lotWrap.appendChild(lotInput);
+          lotWrap.appendChild(lotSuffix);
+
+          // Price input wrapper
+          const priceWrap = document.createElement('div');
+          priceWrap.className = 'relative flex items-center';
+          const priceInput = document.createElement('input');
+          priceInput.type = 'number';
+          priceInput.step = '0.01';
+          priceInput.min = '0';
+          priceInput.inputMode = 'decimal';
+          priceInput.value = entry.price;
+          priceInput.placeholder = idx === 0 ? '3862.96' : 'last digits';
+          priceInput.setAttribute('aria-label', `Entry ${idx + 1} price`);
+          priceInput.className = 'underline-input w-full py-1.5 text-lg mono-num text-gray-900 placeholder:text-gray-300';
+
+          priceInput.addEventListener('input', (e) => {
+            entry.price = e.target.value;
+            calculateAndRenderOutputs();
+          });
+
+          priceInput.addEventListener('blur', () => {
+            const expanded = expandShorthandPrice(entry.price, idx);
+            if (expanded !== entry.price) {
+              entry.price = expanded;
+              priceInput.value = expanded;
+              calculateAndRenderOutputs();
+              showToast(`Expanded price to ${expanded}`);
+            }
+          });
+
+          priceInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              const expanded = expandShorthandPrice(entry.price, idx);
+              if (expanded !== entry.price) {
+                entry.price = expanded;
+                priceInput.value = expanded;
+                calculateAndRenderOutputs();
+              }
+              priceInput.blur();
+            }
+          });
+          priceWrap.appendChild(priceInput);
+
+          // Delete button
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.setAttribute('aria-label', `Remove entry ${idx + 1}`);
+          delBtn.className = 'flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors';
+          delBtn.innerHTML = `
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          `;
+          delBtn.addEventListener('click', () => {
+            if (state.entries.length === 1) {
+              state.entries[0].lot = '';
+              state.entries[0].price = '';
+            } else {
+              state.entries = state.entries.filter((item) => item.id !== entry.id);
+            }
+            renderEntries();
+            calculateAndRenderOutputs();
+          });
+
+          row.appendChild(lotWrap);
+          row.appendChild(priceWrap);
+          row.appendChild(delBtn);
+          entriesContainer.appendChild(row);
+
+          if (focusId === entry.id) {
+            setTimeout(() => {
+              if (focusField === 'lot') lotInput.focus();
+              else priceInput.focus();
+            }, 0);
+          }
+        });
+      }
+
+      function getValidPositions() {
+        let totalLots = 0;
+        let weightedSum = 0;
+        for (const e of state.entries) {
+          const lot = parseFloat(e.lot);
+          const price = parseFloat(e.price);
+          if (Number.isFinite(lot) && lot > 0 && Number.isFinite(price) && price > 0) {
+            totalLots += lot;
+            weightedSum += lot * price;
+          }
+        }
+        if (totalLots <= 0) {
+          return { totalLots: 0, avgEntry: null };
+        }
+        return {
+          totalLots,
+          avgEntry: weightedSum / totalLots
+        };
+      }
+
+      function calculateAndRenderOutputs() {
+        saveState();
+        const { totalLots, avgEntry } = getValidPositions();
+        const isLong = state.direction === 'long';
+        const instCfg = INSTRUMENTS[state.instrument] || INSTRUMENTS.XAUUSD;
+        const pointMultiplier =
+          state.instrument === 'CUSTOM'
+            ? Math.max(0.01, parseFloat(state.customMultiplier) || 10)
+            : instCfg.multiplier;
+        const usdPerPoint = totalLots * pointMultiplier;
+        const sizeLabel =
+          instCfg.type === 'futures'
+            ? `${Number(totalLots.toFixed(2))} ${totalLots === 1 ? 'contract' : 'contracts'} (${state.instrument})`
+            : `${totalLots.toFixed(2)} lot`;
+
+        const currBalRaw = parseFloat(state.currentBal);
+        const targetBalRaw = parseFloat(state.targetBal);
+
+        // 1. Check P/L at any price (plus projected balance if Current Balance is set)
+        const checkPrice = parseFloat(state.checkPrice);
+        if (avgEntry !== null && Number.isFinite(checkPrice) && checkPrice > 0) {
+          const ptDiff = isLong ? checkPrice - avgEntry : avgEntry - checkPrice;
+          const plUsd = ptDiff * usdPerPoint;
+          const sign = plUsd >= 0 ? '+' : '-';
+          const ptSign = ptDiff >= 0 ? '+' : '-';
+          checkPlOutput.className = `pt-0.5 text-base font-bold mono-num ${
+            plUsd >= 0 ? 'text-emerald-700' : 'text-red-600'
+          }`;
+          const balSuffix =
+            Number.isFinite(currBalRaw) && currBalRaw > 0
+              ? ` · Bal $${(currBalRaw + plUsd).toFixed(2)}`
+              : '';
+          checkPlOutput.textContent = `${sign}$${Math.abs(plUsd).toFixed(2)} (${ptSign}${Math.abs(ptDiff).toFixed(2)} pt)${balSuffix}`;
+        } else {
+          checkPlOutput.className = 'pt-0.5 text-base font-bold mono-num text-[#a37414]';
+          checkPlOutput.textContent = '—';
+        }
+
+        // 2. Profit Target & Stop Loss
+        const tpUsdRaw = parseFloat(state.tpUsd);
+        const maxLossRaw = parseFloat(state.maxLossUsd);
+        const rrRaw = parseFloat(state.rr);
+
+        let effectiveTpUsd = null;
+        let tpSourceNote = '';
+
+        if (state.tpMode === 'balance') {
+          if (Number.isFinite(currBalRaw) && currBalRaw >= 0 && Number.isFinite(targetBalRaw) && targetBalRaw > 0) {
+            const needed = targetBalRaw - currBalRaw;
+            if (needed > 0) {
+              effectiveTpUsd = needed;
+              tpSourceNote = ` · +$${needed.toFixed(2)} to reach $${targetBalRaw.toFixed(2)}`;
+              balDiffHint.className = 'text-xs text-[#2563eb] font-medium leading-relaxed';
+              balDiffHint.textContent = `Profit needed: +$${needed.toFixed(2)} to reach $${targetBalRaw.toFixed(2)} balance.`;
+            } else {
+              balDiffHint.className = 'text-xs text-red-600 font-medium leading-relaxed';
+              balDiffHint.textContent = 'Goal balance must be higher than current balance.';
+            }
+          } else {
+            balDiffHint.className = 'text-xs text-gray-500 leading-relaxed';
+            balDiffHint.textContent = 'Enter your current balance (auto-filled from MT5 screenshots) and your goal balance.';
+          }
+        } else {
+          if (Number.isFinite(tpUsdRaw) && tpUsdRaw > 0) {
+            effectiveTpUsd = tpUsdRaw;
+          } else if (
+            Number.isFinite(maxLossRaw) &&
+            maxLossRaw > 0 &&
+            Number.isFinite(rrRaw) &&
+            rrRaw > 0
+          ) {
+            effectiveTpUsd = maxLossRaw * rrRaw;
+            tpSourceNote = ` · 1:${rrRaw.toFixed(1)} R:R ($${effectiveTpUsd.toFixed(2)})`;
+          }
+        }
+
+        // Render TP Card
+        if (avgEntry !== null && effectiveTpUsd !== null && usdPerPoint > 0) {
+          const ptMove = effectiveTpUsd / usdPerPoint;
+          const tpPrice = isLong ? avgEntry + ptMove : avgEntry - ptMove;
+          const moveDir = isLong ? '+' : '-';
+          const tpFormatted = tpPrice.toFixed(2);
+          tpPriceOutput.textContent = tpFormatted;
+          tpSubOutput.textContent = `${sizeLabel} · avg entry ${avgEntry.toFixed(2)} · ${moveDir}${ptMove.toFixed(2)} pt move${tpSourceNote}`;
+          copyTpBtn.classList.remove('hidden');
+          copyTpBtn.onclick = () => copyText(tpFormatted, 'TP');
+        } else {
+          tpPriceOutput.textContent = '—';
+          tpSubOutput.textContent =
+            avgEntry === null
+              ? 'Add at least one valid lot size and entry price.'
+              : 'Enter a Profit target (USD) or Max Loss + R:R ratio.';
+          copyTpBtn.classList.add('hidden');
+        }
+
+        // Render SL Card
+        if (avgEntry !== null && Number.isFinite(maxLossRaw) && maxLossRaw > 0 && usdPerPoint > 0) {
+          const slPtMove = maxLossRaw / usdPerPoint;
+          const slPrice = isLong ? avgEntry - slPtMove : avgEntry + slPtMove;
+          const slMoveDir = isLong ? '-' : '+';
+          const slFormatted = slPrice.toFixed(2);
+          slPriceOutput.textContent = slFormatted;
+
+          let rrSummary = '';
+          if (effectiveTpUsd !== null) {
+            const actualRr = effectiveTpUsd / maxLossRaw;
+            rrSummary = ` · R:R 1:${actualRr.toFixed(2)}`;
+          }
+          slSubOutput.textContent = `${slMoveDir}${slPtMove.toFixed(2)} pt move · Max risk $${maxLossRaw.toFixed(2)}${rrSummary}`;
+          copySlBtn.classList.remove('hidden');
+          copySlBtn.onclick = () => copyText(slFormatted, 'SL');
+        } else {
+          slPriceOutput.textContent = '—';
+          slSubOutput.textContent =
+            avgEntry === null
+              ? 'Add at least one valid entry to calculate SL.'
+              : 'Enter Max Loss $ to calculate your stop loss.';
+          copySlBtn.classList.add('hidden');
+        }
+
+
+      }
+
+      // Preprocess image on offscreen canvas (upscale + invert if dark mode like MT5)
+      function preprocessImageForOcr(file) {
+        return new Promise((resolve) => {
+          const img = new Image();
+          const url = URL.createObjectURL(file);
+          img.onload = () => {
+            try {
+              const scale = img.width < 1200 ? 2 : 1;
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width * scale;
+              canvas.height = img.height * scale;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+              const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              const d = imgData.data;
+              let lumSum = 0;
+              const step = 16;
+              let samples = 0;
+              for (let i = 0; i < d.length; i += 4 * step) {
+                lumSum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                samples++;
+              }
+              const isDark = samples > 0 && lumSum / samples < 128;
+
+              for (let i = 0; i < d.length; i += 4) {
+                let gray = isDark
+                  ? 255 - Math.max(d[i], d[i + 1], d[i + 2])
+                  : 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                gray = Math.min(255, Math.max(0, (gray - 128) * 1.45 + 128));
+                d[i] = d[i + 1] = d[i + 2] = gray;
+              }
+              ctx.putImageData(imgData, 0, 0);
+              URL.revokeObjectURL(url);
+              resolve(canvas);
+            } catch (e) {
+              URL.revokeObjectURL(url);
+              resolve(file);
+            }
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve(file);
+          };
+          img.src = url;
+        });
+      }
+
+      // Reconstruct horizontal visual rows from Tesseract word bounding boxes (fixes 2-column tables like Tradovate)
+      function reconstructRowsFromOcr(ocrData) {
+        const words = ocrData && Array.isArray(ocrData.words) ? ocrData.words : [];
+        if (words.length === 0) return ocrData && ocrData.text ? ocrData.text : '';
+
+        const items = words
+          .filter((w) => w && w.text && w.bbox)
+          .map((w) => ({
+            text: w.text.trim(),
+            x: w.bbox.x0,
+            y: (w.bbox.y0 + w.bbox.y1) / 2,
+            h: Math.max(8, w.bbox.y1 - w.bbox.y0)
+          }))
+          .filter((w) => w.text.length > 0)
+          .sort((a, b) => a.y - b.y || a.x - b.x);
+
+        const rows = [];
+        for (const item of items) {
+          const tol = Math.max(10, item.h * 0.6);
+          let row = rows.find((r) => Math.abs(r.y - item.y) <= tol);
+          if (!row) {
+            row = { y: item.y, words: [] };
+            rows.push(row);
+          }
+          row.words.push(item);
+        }
+        return rows
+          .map((r) =>
+            r.words
+              .sort((a, b) => a.x - b.x)
+              .map((w) => w.text)
+              .join(' ')
+          )
+          .join('\n');
+      }
+
+      // Parse OCR text for MT5 / broker Gold entries (handles 2-line MT5 layout & space-separated prices)
+      function parseBrokerOcrText(rawText) {
+        let text = String(rawText || '');
+
+        // Normalize space-separated thousands across full text first so Balance like "24 321.64" becomes "24321.64"
+        const normalizedFull = text
+          .replace(/(\d),(\d{2})\b/g, '$1.$2')
+          .replace(/\b(\d{1,3})\s+(\d{3}\.\d{1,2})\b/g, '$1$2');
+
+        let detectedBalance = null;
+        const noCommas = normalizedFull.replace(/(\d),(\d{3})/g, '$1$2');
+        const balMatch = noCommas.match(/\b(?:balance|net\s*liq|equity)[:\s.]*([\d]+\.\d{1,2})/i);
+        if (balMatch) {
+          const bVal = parseFloat(balMatch[1]);
+          if (Number.isFinite(bVal) && bVal > 0) detectedBalance = bVal.toFixed(2);
+        }
+
+        let detectedTotalPl = null;
+        let detectedOpenPl = null;
+        let detectedEquity = null;
+
+        const totalPlMatch = noCommas.match(/\btotal\s*p[\/\|il1]?l[:\s]*(-?[\d]+\.\d{1,2})/i);
+        if (totalPlMatch) detectedTotalPl = parseFloat(totalPlMatch[1]).toFixed(2);
+
+        const openPlMatch = noCommas.match(/\bopen\s*p[\/\|il1]?l[:\s]*(-?[\d]+\.\d{1,2})/i);
+        if (openPlMatch) detectedOpenPl = parseFloat(openPlMatch[1]).toFixed(2);
+
+        const equityMatch = noCommas.match(/\bequity(?:\s+profit)?[:\s\n]*([\d]+\.\d{1,2})/i);
+        if (equityMatch) detectedEquity = parseFloat(equityMatch[1]).toFixed(2);
+        if (!detectedBalance && detectedEquity) detectedBalance = detectedEquity;
+
+        // If "Positions" header exists (MT5), ignore Balance/Equity/Margin section above it for entries
+        const posIdx = normalizedFull.search(/\bpositions\b/i);
+        text = posIdx !== -1 ? normalizedFull.slice(posIdx) : normalizedFull;
+
+        // Normalize comma decimals (0,02 -> 0.02) and MT5 space-separated thousands (3 786.34 -> 3786.34)
+        text = text.replace(/(\d),(\d{2})\b/g, '$1.$2');
+        text = text.replace(/\b(\d)\s+(\d{3}\.\d{1,2})\b/g, '$1$2');
+
+        const lines = text
+          .split(/\r?\n/)
+          .map((l) => l.trim())
+          .filter(Boolean);
+
+        const found = [];
+        let detectedDirection = null;
+
+        // Pass 1A: Anchor on MT5 price-pair lines ("3615.27 -> 3651.66") and read lot/side from the line above
+        for (let i = 0; i < lines.length; i++) {
+          const priceLine = lines[i];
+          const pairMatches = priceLine.match(/\b([1-9]\d{3}\.\d{1,2})\b/g);
+          if (pairMatches && pairMatches.length >= 2) {
+            const entryP = parseFloat(pairMatches[0]);
+            const currP = parseFloat(pairMatches[1]);
+            if (entryP >= 1500 && entryP <= 9999 && currP >= 1500 && currP <= 9999) {
+              const prevLine = (lines[i - 1] || '').replace(/\bO\.(\d{2})\b/g, '0.$1');
+              const dirM = prevLine.match(/\b(b[uv6]?y|s[e3][l1iI]{2})\b/i);
+              let dir = null;
+              if (dirM) {
+                dir = dirM[1].toLowerCase().startsWith('s') ? 'short' : 'long';
+                if (!detectedDirection) detectedDirection = dir;
+              }
+              // Extract lot size from prevLine: prefer explicit side+lot, else first decimal before end-of-line P/L
+              let lotVal = 0.01;
+              const explicitLot = prevLine.match(/\b(?:b[uv6]?y|s[e3][l1iI]{2})\s*(\d{1,2}\.\d{2})\b/i);
+              if (explicitLot) {
+                lotVal = parseFloat(explicitLot[1]);
+              } else {
+                const nums = prevLine.match(/\b(\d{1,2}\.\d{2})\b/g);
+                if (nums && nums.length >= 2) {
+                  // First number is lot, last number is floating P/L
+                  lotVal = parseFloat(nums[0]);
+                } else if (nums && nums.length === 1 && parseFloat(nums[0]) <= 5) {
+                  lotVal = parseFloat(nums[0]);
+                }
+              }
+              if (!(lotVal > 0 && lotVal <= 50)) lotVal = 0.01;
+              found.push({ lot: lotVal.toFixed(2), price: pairMatches[0], direction: dir });
+            }
+          }
+        }
+
+        // Pass 1B: Fallback to "buy/sell <lot>" if no MT5 price-pair lines matched
+        if (found.length === 0) {
+          for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].replace(/\bO\.(\d{2})\b/g, '0.$1');
+            const sideLotMatch =
+              line.match(/\b(b[uv6]?y|s[e3][l1iI]{2})\s*(\d{1,2}\.\d{2})\b/i) ||
+              line.match(/\bXAU\S*[,\s]+.*?(\d{1,2}\.\d{2})\b/i);
+            if (sideLotMatch) {
+              const sideWord = (sideLotMatch[1] || '').toLowerCase();
+              const dir = sideWord.startsWith('b') ? 'long' : sideWord.startsWith('s') ? 'short' : null;
+              const lotVal = parseFloat(sideLotMatch[sideLotMatch.length - 1]);
+              if (lotVal <= 0 || lotVal > 50) continue;
+
+              const windowText = [lines[i], lines[i + 1] || '', lines[i + 2] || ''].join(' ');
+              const priceMatches = windowText.match(/\b([1-9]\d{3}\.\d{1,2})\b/g);
+              if (priceMatches && priceMatches.length > 0) {
+                const priceVal = parseFloat(priceMatches[0]);
+                if (priceVal >= 1500 && priceVal <= 9999) {
+                  if (!detectedDirection && dir) detectedDirection = dir;
+                  found.push({ lot: lotVal.toFixed(2), price: priceMatches[0], direction: dir });
+                }
+              }
+            }
+          }
+        }
+
+        const isSummaryLine = (line) =>
+          /balance|equity|margin|level|net\s*liq|initial|maintenance|available|total\s*p|open\s*p|profit|account\s*info/i.test(line);
+        const isAccountSummaryScreen =
+          detectedTotalPl !== null ||
+          detectedOpenPl !== null ||
+          detectedEquity !== null ||
+          /account\s*(info|summary)|initial\s*margin|maintenance\s*mar/i.test(normalizedFull);
+
+        // Pass 2 (single-line fallback for non-MT5 formats without buy/sell keyword)
+        if (found.length === 0 && !isAccountSummaryScreen) {
+          for (const line of lines) {
+            if (isSummaryLine(line)) continue;
+            const lotMatch = line.match(/\b(0\.\d{2}|[1-9]\d?\.\d{2})\b/);
+            const priceMatches = line.match(/\b([1-9]\d{3}\.\d{1,2})\b/g);
+            if (lotMatch && priceMatches && priceMatches.length > 0) {
+              const lotVal = parseFloat(lotMatch[1]);
+              const priceVal = parseFloat(priceMatches[0]);
+              if (lotVal > 0 && lotVal <= 20 && priceVal >= 1500 && priceVal <= 9999) {
+                found.push({ lot: lotVal.toFixed(2), price: priceMatches[0] });
+              }
+            }
+          }
+        }
+
+        // Pass 3 (price-only fallback, never run on Account Summary screens)
+        if (found.length === 0 && !isAccountSummaryScreen) {
+          const nonSummaryText = lines.filter((l) => !isSummaryLine(l)).join(' ');
+          const allPrices = nonSummaryText.match(/\b([1-9]\d{3}\.\d{2})\b/g) || [];
+          const uniquePrices = [...new Set(allPrices)].slice(0, 8);
+          for (const p of uniquePrices) {
+            const pv = parseFloat(p);
+            if (pv >= 1500 && pv <= 9999) {
+              found.push({ lot: '0.01', price: p });
+            }
+          }
+        }
+
+        return { entries: found, direction: detectedDirection, balance: detectedBalance, totalPl: detectedTotalPl, openPl: detectedOpenPl, equity: detectedEquity };
+      }
+
+      async function handleScreenshotFile(file) {
+        if (!file || !file.type.startsWith('image/')) {
+          showToast('Please select an image file');
+          return;
+        }
+
+        dropzoneIdle.classList.add('hidden');
+        dropzoneStatus.classList.remove('hidden');
+        ocrSpinner.classList.remove('hidden');
+        dropzoneStatusText.textContent = 'Scanning broker screenshot...';
+        dropzoneSubText.textContent = file.name;
+
+        try {
+          if (typeof Tesseract === 'undefined') {
+            throw new Error('OCR engine unavailable');
+          }
+          const processedInput = await preprocessImageForOcr(file);
+          const result = await Tesseract.recognize(processedInput, 'eng');
+          const rowText = reconstructRowsFromOcr(result.data) || (result.data && result.data.text) || '';
+          const { entries: parsed, direction, balance, totalPl, openPl, equity } = parseBrokerOcrText(rowText);
+
+          ocrSpinner.classList.add('hidden');
+          let filledSummaryCount = 0;
+          if (balance) {
+            state.currentBal = balance;
+            currentBalInput.value = balance;
+            filledSummaryCount++;
+          }
+
+          if (parsed.length > 0) {
+            if (direction) {
+              state.direction = direction;
+              directionSelect.value = direction;
+            }
+            state.entries = parsed.map((item) => ({
+              id: state.nextId++,
+              lot: item.lot,
+              price: item.price
+            }));
+            renderEntries();
+            calculateAndRenderOutputs();
+            const dirLabel = direction === 'short' ? 'Short' : direction === 'long' ? 'Long' : '';
+            dropzoneStatusText.textContent = `Loaded ${parsed.length} ${dirLabel ? dirLabel + ' ' : ''}${parsed.length === 1 ? 'entry' : 'entries'} from screenshot`;
+            dropzoneSubText.textContent = 'Tap to scan another screenshot';
+            showToast(`Filled ${parsed.length} entries`);
+          } else if (filledSummaryCount > 0) {
+            calculateAndRenderOutputs();
+            dropzoneStatusText.textContent = 'Loaded account summary from screenshot';
+            dropzoneSubText.textContent = 'Enter your Daily Goal $ or positions below';
+            showToast('Loaded account summary');
+          } else {
+            dropzoneStatusText.textContent = 'No trade entries or summary detected';
+            dropzoneSubText.textContent = 'Tap to try another screenshot or enter manually below';
+          }
+        } catch (err) {
+          ocrSpinner.classList.add('hidden');
+          dropzoneStatusText.textContent = 'Could not read screenshot automatically';
+          dropzoneSubText.textContent = 'Tap to retry or enter your positions below';
+        }
+      }
+
+      // Event listeners
+      function applyInstrumentUI() {
+        state.instrument = 'XAUUSD';
+      }
+
+      directionSelect.addEventListener('change', (e) => {
+        state.direction = e.target.value;
+        calculateAndRenderOutputs();
+      });
+
+
+
+      function applyTpModeUI() {
+        const isBal = state.tpMode === 'balance';
+        tpProfitPanel.classList.toggle('hidden', isBal);
+        tpBalancePanel.classList.toggle('hidden', !isBal);
+        if (isBal) {
+          modeBalanceBtn.className = 'px-2.5 py-1 text-xs font-semibold rounded-md bg-white text-[#2563eb] shadow-sm transition-colors';
+          modeProfitBtn.className = 'px-2.5 py-1 text-xs font-semibold rounded-md text-gray-600 hover:text-gray-900 transition-colors';
+        } else {
+          modeProfitBtn.className = 'px-2.5 py-1 text-xs font-semibold rounded-md bg-white text-[#2563eb] shadow-sm transition-colors';
+          modeBalanceBtn.className = 'px-2.5 py-1 text-xs font-semibold rounded-md text-gray-600 hover:text-gray-900 transition-colors';
+        }
+      }
+
+      modeProfitBtn.addEventListener('click', () => {
+        state.tpMode = 'profit';
+        applyTpModeUI();
+        calculateAndRenderOutputs();
+      });
+
+      modeBalanceBtn.addEventListener('click', () => {
+        state.tpMode = 'balance';
+        applyTpModeUI();
+        calculateAndRenderOutputs();
+      });
+
+      currentBalInput.addEventListener('input', (e) => {
+        state.currentBal = e.target.value;
+        calculateAndRenderOutputs();
+      });
+
+      targetBalInput.addEventListener('input', (e) => {
+        state.targetBal = e.target.value;
+        calculateAndRenderOutputs();
+      });
+
+      resetBtn.addEventListener('click', () => {
+        state.entries = [{ id: state.nextId++, lot: '', price: '' }];
+        state.checkPrice = '';
+        state.tpUsd = '';
+        state.currentBal = '';
+        state.targetBal = '';
+        state.maxLossUsd = '';
+        state.rr = '';
+        checkPriceInput.value = '';
+        tpUsdInput.value = '';
+        currentBalInput.value = '';
+        targetBalInput.value = '';
+        state.totalPl = '';
+        state.openPl = '';
+        state.equity = '';
+        state.dailyGoal = '';
+        maxLossInput.value = '';
+        rrInput.value = '';
+        dropzoneIdle.classList.remove('hidden');
+        dropzoneStatus.classList.add('hidden');
+        renderEntries(state.entries[0].id, 'price');
+        calculateAndRenderOutputs();
+      });
+
+      addEntryBtn.addEventListener('click', () => {
+        const lastLot = state.entries[state.entries.length - 1]?.lot || '0.01';
+        const newEntry = { id: state.nextId++, lot: lastLot, price: '' };
+        state.entries.push(newEntry);
+        renderEntries(newEntry.id, 'price');
+        calculateAndRenderOutputs();
+      });
+
+      quickLotBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const lotVal = btn.getAttribute('data-quick-lot');
+          const last = state.entries[state.entries.length - 1];
+          if (last && !last.price && (!last.lot || last.lot === '0.01')) {
+            last.lot = lotVal;
+            renderEntries(last.id, 'price');
+          } else {
+            const newEntry = { id: state.nextId++, lot: lotVal, price: '' };
+            state.entries.push(newEntry);
+            renderEntries(newEntry.id, 'price');
+          }
+          calculateAndRenderOutputs();
+        });
+      });
+
+      checkPriceInput.addEventListener('input', (e) => {
+        state.checkPrice = e.target.value;
+        calculateAndRenderOutputs();
+      });
+
+      tpUsdInput.addEventListener('input', (e) => {
+        state.tpUsd = e.target.value;
+        calculateAndRenderOutputs();
+      });
+
+      maxLossInput.addEventListener('input', (e) => {
+        state.maxLossUsd = e.target.value;
+        calculateAndRenderOutputs();
+      });
+
+      rrInput.addEventListener('input', (e) => {
+        state.rr = e.target.value;
+        calculateAndRenderOutputs();
+      });
+
+
+
+      // Dropzone & Paste events
+      const togglePasteTextBtn = document.getElementById('togglePasteTextBtn');
+      const pasteTextBox = document.getElementById('pasteTextBox');
+      const pasteTextArea = document.getElementById('pasteTextArea');
+      const cancelPasteTextBtn = document.getElementById('cancelPasteTextBtn');
+      const applyPasteTextBtn = document.getElementById('applyPasteTextBtn');
+
+      togglePasteTextBtn.addEventListener('click', () => {
+        pasteTextBox.classList.toggle('hidden');
+        if (!pasteTextBox.classList.contains('hidden')) pasteTextArea.focus();
+      });
+      cancelPasteTextBtn.addEventListener('click', () => {
+        pasteTextBox.classList.add('hidden');
+      });
+      applyPasteTextBtn.addEventListener('click', () => {
+        const { entries: parsed, direction: pastedDir } = parseBrokerOcrText(pasteTextArea.value || '');
+        if (pastedDir) { state.direction = pastedDir; directionSelect.value = pastedDir; }
+        if (parsed.length > 0) {
+          state.entries = parsed.map((item) => ({
+            id: state.nextId++,
+            lot: item.lot,
+            price: item.price
+          }));
+          renderEntries();
+          calculateAndRenderOutputs();
+          pasteTextBox.classList.add('hidden');
+          pasteTextArea.value = '';
+          showToast(`Filled ${parsed.length} entries`);
+        } else {
+          showToast('No valid lot/price pairs found');
+        }
+      });
+
+      screenshotInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          handleScreenshotFile(e.target.files[0]);
+          e.target.value = '';
+        }
+      });
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dropzone-active');
+      });
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dropzone-active');
+      });
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dropzone-active');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleScreenshotFile(e.dataTransfer.files[0]);
+        }
+      });
+      document.addEventListener('paste', (e) => {
+        const items = e.clipboardData && e.clipboardData.items;
+        if (!items) return;
+        for (const item of items) {
+          if (item.type && item.type.startsWith('image/')) {
+            const file = item.getAsFile();
+            if (file) {
+              e.preventDefault();
+              handleScreenshotFile(file);
+              return;
+            }
+          }
+        }
+      });
+
+      window.addEventListener('pagehide', saveState);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') saveState();
+      });
+
+      // Sync restored inputs and initial render
+      directionSelect.value = state.direction;
+      applyInstrumentUI();
+      checkPriceInput.value = state.checkPrice;
+      tpUsdInput.value = state.tpUsd;
+      currentBalInput.value = state.currentBal;
+      targetBalInput.value = state.targetBal;
+      maxLossInput.value = state.maxLossUsd;
+      rrInput.value = state.rr;
+      applyTpModeUI();
+      renderEntries();
+      calculateAndRenderOutputs();
+    
+    })();
+  </script>
+
+  <script>
+    // Futures Target Balance Calculator
+    (function () {
+
+      const STORAGE_KEY = 'futures_target_calc_v1';
+
+      const PRESETS = {
+        MGC: { name: 'Micro Gold', ptVal: 10, tick: 0.10, defComm: 1.20 },
+        GC: { name: 'Gold', ptVal: 100, tick: 0.10, defComm: 4.50 },
+        MNQ: { name: 'Micro Nasdaq', ptVal: 2, tick: 0.25, defComm: 1.20 },
+        NQ: { name: 'E-mini Nasdaq', ptVal: 20, tick: 0.25, defComm: 4.50 },
+        MES: { name: 'Micro S&P 500', ptVal: 5, tick: 0.25, defComm: 1.20 },
+        ES: { name: 'E-mini S&P 500', ptVal: 50, tick: 0.25, defComm: 4.50 },
+        CUSTOM: { name: 'Custom', ptVal: 10, tick: 0.10, defComm: 1.20 }
+      };
+
+      const defaultState = () => ({
+        instrument: 'MGC',
+        customPtVal: '10',
+        customTickSize: '0.10',
+        direction: 'buy',
+        currentBal: '25936',
+        targetBal: '26501',
+        entryPrice: '3615.8',
+        contracts: 2,
+        includeFees: true,
+        commPerContract: '1.20',
+        slPoints: '',
+        checkPrice: ''
+      });
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return defaultState();
+          const p = JSON.parse(raw);
+          const def = defaultState();
+          return {
+            instrument: PRESETS[p.instrument] ? p.instrument : def.instrument,
+            customPtVal: p.customPtVal !== undefined ? String(p.customPtVal) : def.customPtVal,
+            customTickSize: p.customTickSize !== undefined ? String(p.customTickSize) : def.customTickSize,
+            direction: p.direction === 'sell' ? 'sell' : 'buy',
+            currentBal: p.currentBal !== undefined ? String(p.currentBal) : def.currentBal,
+            targetBal: p.targetBal !== undefined ? String(p.targetBal) : def.targetBal,
+            entryPrice: p.entryPrice !== undefined ? String(p.entryPrice) : def.entryPrice,
+            contracts: Math.max(1, parseInt(p.contracts, 10) || def.contracts),
+            includeFees: typeof p.includeFees === 'boolean' ? p.includeFees : def.includeFees,
+            commPerContract: p.commPerContract !== undefined ? String(p.commPerContract) : def.commPerContract,
+            slPoints: p.slPoints !== undefined ? String(p.slPoints) : def.slPoints,
+            checkPrice: p.checkPrice !== undefined ? String(p.checkPrice) : def.checkPrice
+          };
+        } catch (e) {
+          return defaultState();
+        }
+      }
+
+      let state = loadState();
+
+      // DOM elements
+      const saveBadge = document.getElementById('fut_saveBadge');
+      const resetBtn = document.getElementById('fut_resetBtn');
+      const instPills = document.querySelectorAll('#futuresView .inst-pill');
+      const customSpecRow = document.getElementById('fut_customSpecRow');
+      const customPtValInput = document.getElementById('fut_customPtVal');
+      const customTickSizeInput = document.getElementById('fut_customTickSize');
+      const instSpecBar = document.getElementById('fut_instSpecBar');
+      const buyBtn = document.getElementById('fut_buyBtn');
+      const sellBtn = document.getElementById('fut_sellBtn');
+      const currentBalInput = document.getElementById('fut_currentBalInput');
+      const targetBalInput = document.getElementById('fut_targetBalInput');
+      const qtBtns = document.querySelectorAll('#futuresView .qt-btn');
+      const entryPriceInput = document.getElementById('fut_entryPriceInput');
+      const contractsInput = document.getElementById('fut_contractsInput');
+      const decContractBtn = document.getElementById('fut_decContractBtn');
+      const incContractBtn = document.getElementById('fut_incContractBtn');
+      const slPointsInput = document.getElementById('fut_slPointsInput');
+      const futCheckPriceInput = document.getElementById('fut_checkPriceInput');
+      const futCheckPlVal = document.getElementById('fut_checkPlVal');
+      const futCheckPlSub = document.getElementById('fut_checkPlSub');
+      const includeFeesCheck = document.getElementById('fut_includeFeesCheck');
+      const commPerContractInput = document.getElementById('fut_commPerContractInput');
+
+      const heroCard = document.getElementById('fut_heroCard');
+      const heroTpPrice = document.getElementById('fut_heroTpPrice');
+      const heroTpSub = document.getElementById('fut_heroTpSub');
+      const heroWarn = document.getElementById('fut_heroWarn');
+      const copyTpBtn = document.getElementById('fut_copyTpBtn');
+
+      const statNetProfit = document.getElementById('fut_statNetProfit');
+      const statGrossProfit = document.getElementById('fut_statGrossProfit');
+      const statPointsNeeded = document.getElementById('fut_statPointsNeeded');
+      const statTicksNeeded = document.getElementById('fut_statTicksNeeded');
+      const statTotalFees = document.getElementById('fut_statTotalFees');
+      const statBreakeven = document.getElementById('fut_statBreakeven');
+      const statDollarPerPt = document.getElementById('fut_statDollarPerPt');
+      const statDollarPerTick = document.getElementById('fut_statDollarPerTick');
+
+      const slStatsGrid = document.getElementById('fut_slStatsGrid');
+      const statSlPrice = document.getElementById('fut_statSlPrice');
+      const statSlDist = document.getElementById('fut_statSlDist');
+      const statSlRisk = document.getElementById('fut_statSlRisk');
+      const statRrRatio = document.getElementById('fut_statRrRatio');
+
+      const compareBody = document.getElementById('fut_compareBody');
+      const toastEl = document.getElementById('fut_toast');
+      const futDropzone = document.getElementById('fut_dropzone');
+      const futScreenshotInput = document.getElementById('fut_screenshotInput');
+      const futDropIdle = document.getElementById('fut_dropIdle');
+      const futDropStatus = document.getElementById('fut_dropStatus');
+      const futDropStatusText = document.getElementById('fut_dropStatusText');
+      const futDropSubText = document.getElementById('fut_dropSubText');
+
+      let toastTimer = null;
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2000);
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          saveBadge.textContent = 'SAVED';
+        } catch (e) {
+          saveBadge.textContent = '';
+        }
+      }
+
+      function getDecimals(num) {
+        const s = String(num);
+        const idx = s.indexOf('.');
+        return idx === -1 ? 0 : s.length - idx - 1;
+      }
+
+      function formatPrice(val, tick) {
+        const dec = Math.max(2, getDecimals(tick));
+        return Number(val).toFixed(dec);
+      }
+
+      function formatMoney(val) {
+        const sign = val < 0 ? '-' : '';
+        return sign + '$' + Math.abs(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function getActiveSpec() {
+        if (state.instrument === 'CUSTOM') {
+          const ptVal = Math.max(0.01, parseFloat(state.customPtVal) || 10);
+          const tick = Math.max(0.0001, parseFloat(state.customTickSize) || 0.10);
+          return { ptVal, tick };
+        }
+        const p = PRESETS[state.instrument] || PRESETS.MGC;
+        return { ptVal: p.ptVal, tick: p.tick };
+      }
+
+      function roundToTickGuarantee(exactTp, tick, isBuy) {
+        const dec = getDecimals(tick);
+        const steps = exactTp / tick;
+        const alignedSteps = isBuy ? Math.ceil(steps - 1e-9) : Math.floor(steps + 1e-9);
+        return Number((alignedSteps * tick).toFixed(Math.max(2, dec)));
+      }
+
+      function syncInputsFromState() {
+        instPills.forEach((btn) => {
+          btn.classList.toggle('active', btn.getAttribute('data-inst') === state.instrument);
+        });
+        customSpecRow.classList.toggle('hidden', state.instrument !== 'CUSTOM');
+        customPtValInput.value = state.customPtVal;
+        customTickSizeInput.value = state.customTickSize;
+
+        buyBtn.className = 'dir-btn ' + (state.direction === 'buy' ? 'active-buy' : '');
+        sellBtn.className = 'dir-btn ' + (state.direction === 'sell' ? 'active-sell' : '');
+
+        currentBalInput.value = state.currentBal;
+        targetBalInput.value = state.targetBal;
+        entryPriceInput.value = state.entryPrice;
+        contractsInput.value = state.contracts;
+        slPointsInput.value = state.slPoints;
+        futCheckPriceInput.value = state.checkPrice;
+        includeFeesCheck.checked = state.includeFees;
+        commPerContractInput.value = state.commPerContract;
+        commPerContractInput.disabled = !state.includeFees;
+      }
+
+      let lastCopyValue = '';
+
+      function calculate() {
+        saveState();
+        const { ptVal, tick } = getActiveSpec();
+        const tickVal = ptVal * tick;
+        instSpecBar.innerHTML = `<span>Point: ${formatMoney(ptVal)}</span><span>Tick: ${tick} (${formatMoney(tickVal)})</span>`;
+
+        const isBuy = state.direction === 'buy';
+        const currBal = parseFloat(state.currentBal);
+        const targBal = parseFloat(state.targetBal);
+        const entry = parseFloat(state.entryPrice);
+        const contracts = Math.max(1, parseInt(state.contracts, 10) || 1);
+        const commRate = state.includeFees ? Math.max(0, parseFloat(state.commPerContract) || 0) : 0;
+        const slPts = parseFloat(state.slPoints);
+
+        heroCard.className = 'hero-card ' + (isBuy ? 'buy-glow' : 'sell-glow');
+        heroWarn.classList.add('hidden');
+
+        const dollarPerPt = contracts * ptVal;
+        const dollarPerTick = dollarPerPt * tick;
+        const totalFees = contracts * commRate;
+
+        statDollarPerPt.textContent = formatMoney(dollarPerPt) + '/pt';
+        statDollarPerTick.textContent = 'Tick: ' + formatMoney(dollarPerTick);
+        statTotalFees.textContent = formatMoney(totalFees);
+
+        if (Number.isFinite(entry) && entry > 0) {
+          const beMove = totalFees / dollarPerPt;
+          const bePrice = isBuy ? entry + beMove : entry - beMove;
+          statBreakeven.textContent = 'BE: ' + formatPrice(bePrice, tick);
+        } else {
+          statBreakeven.textContent = 'BE: —';
+        }
+
+        const hasBalances = Number.isFinite(currBal) && Number.isFinite(targBal);
+        const hasEntry = Number.isFinite(entry) && entry > 0;
+
+        // Check P/L at custom price level
+        const customCheckP = parseFloat(state.checkPrice);
+        if (hasEntry && Number.isFinite(customCheckP) && customCheckP > 0) {
+          const ptsMove = isBuy ? customCheckP - entry : entry - customCheckP;
+          const ticksMove = ptsMove / tick;
+          const grossPl = ptsMove * dollarPerPt;
+          const netPl = grossPl - totalFees;
+          const projBal = Number.isFinite(currBal) ? currBal + netPl : null;
+
+          futCheckPlVal.textContent = `${netPl >= 0 ? '+' : ''}${formatMoney(netPl)} net`;
+          futCheckPlVal.style.color = netPl >= 0 ? '#34d399' : '#f87171';
+          const ptSign = ptsMove >= 0 ? '+' : '';
+          const balTxt = projBal !== null ? ` · Proj. Bal: ${formatMoney(projBal)}` : '';
+          futCheckPlSub.textContent = `Gross: ${grossPl >= 0 ? '+' : ''}${formatMoney(grossPl)} · ${ptSign}${ptsMove.toFixed(2)} pts (${ptSign}${Math.round(ticksMove)} ticks)${balTxt}`;
+        } else {
+          futCheckPlVal.textContent = '—';
+          futCheckPlVal.style.color = 'var(--text-dim)';
+          futCheckPlSub.textContent = 'Type any price level to see Net P/L (after fees), points, ticks, and projected balance.';
+        }
+
+        if (!hasBalances || !hasEntry) {
+          heroTpPrice.textContent = '—';
+          heroTpPrice.className = 'hero-price mono neutral-text';
+          heroTpSub.textContent = 'Enter Current Balance, Target Balance, and Entry Price.';
+          copyTpBtn.classList.add('disabled');
+          statNetProfit.textContent = '—';
+          statGrossProfit.textContent = 'Gross: —';
+          statPointsNeeded.textContent = '—';
+          statTicksNeeded.textContent = 'Ticks: —';
+          slStatsGrid.classList.add('hidden');
+          compareBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);">Enter trade details above</td></tr>';
+          return;
+        }
+
+        const netProfit = targBal - currBal;
+        const grossProfit = netProfit + totalFees;
+        const pointsNeeded = grossProfit / dollarPerPt;
+        const ticksNeeded = pointsNeeded / tick;
+
+        statNetProfit.textContent = formatMoney(netProfit);
+        statNetProfit.className = 'stat-val mono ' + (netProfit >= 0 ? 'text-green' : 'text-red');
+        statGrossProfit.textContent = 'Gross: ' + formatMoney(grossProfit);
+
+        if (netProfit <= 0) {
+          heroTpPrice.textContent = '—';
+          heroTpPrice.className = 'hero-price mono neutral-text';
+          heroTpSub.textContent = 'Target Balance is already at or below Current Balance.';
+          copyTpBtn.classList.add('disabled');
+          statPointsNeeded.textContent = '0.00 pts';
+          statTicksNeeded.textContent = 'Ticks: 0';
+          slStatsGrid.classList.add('hidden');
+          compareBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim);">Target balance must exceed current balance</td></tr>';
+          return;
+        }
+
+        const exactTp = isBuy ? entry + pointsNeeded : entry - pointsNeeded;
+        const tickTp = roundToTickGuarantee(exactTp, tick, isBuy);
+        const actualMove = isBuy ? tickTp - entry : entry - tickTp;
+        const actualNetProfit = actualMove * dollarPerPt - totalFees;
+        const finalBal = currBal + actualNetProfit;
+
+        lastCopyValue = formatPrice(tickTp, tick);
+        heroTpPrice.textContent = lastCopyValue;
+        heroTpPrice.className = 'hero-price mono ' + (isBuy ? 'buy-text' : 'sell-text');
+        heroTpSub.innerHTML =
+          `Exact: <span class="mono">${formatPrice(exactTp, tick)}</span> · Final Bal at tick TP: <strong class="mono" style="color:var(--text);">${formatMoney(finalBal)}</strong>`;
+        copyTpBtn.classList.remove('disabled');
+
+        if (tickTp <= 0) {
+          heroWarn.textContent = 'Warning: Calculated TP price is zero or negative. Increase contract size or lower target.';
+          heroWarn.classList.remove('hidden');
+        }
+
+        statPointsNeeded.textContent = pointsNeeded.toFixed(2) + ' pts';
+        statTicksNeeded.textContent = 'Ticks: ' + Math.ceil(ticksNeeded - 1e-9).toLocaleString('en-US');
+
+        // Optional Stop Loss
+        if (Number.isFinite(slPts) && slPts > 0) {
+          slStatsGrid.classList.remove('hidden');
+          const slPrice = isBuy ? entry - slPts : entry + slPts;
+          const slDollarLoss = slPts * dollarPerPt + totalFees;
+          const slPct = currBal > 0 ? (slDollarLoss / currBal) * 100 : 0;
+          const rr = slDollarLoss > 0 ? netProfit / slDollarLoss : 0;
+
+          statSlPrice.textContent = formatPrice(slPrice, tick);
+          statSlDist.textContent = `-${slPts.toFixed(2)} pts (${Math.round(slPts / tick)} ticks)`;
+          statSlRisk.textContent = '-' + formatMoney(slDollarLoss);
+          statRrRatio.textContent = `${slPct.toFixed(2)}% acct · R:R 1:${rr.toFixed(2)}`;
+        } else {
+          slStatsGrid.classList.add('hidden');
+        }
+
+        // Contract Comparison Table (1, 2, 3, 5, 10)
+        const sizes = [1, 2, 3, 5, 10];
+        compareBody.innerHTML = sizes
+          .map((ct) => {
+            const ctDollarPt = ct * ptVal;
+            const ctFees = ct * commRate;
+            const ctGross = netProfit + ctFees;
+            const ctPts = ctGross / ctDollarPt;
+            const ctExactTp = isBuy ? entry + ctPts : entry - ctPts;
+            const ctTickTp = roundToTickGuarantee(ctExactTp, tick, isBuy);
+            const isActive = ct === contracts ? 'active-row' : '';
+            return `<tr class="${isActive}">
+              <td class="mono">${ct} ${ct === 1 ? 'ct' : 'cts'}</td>
+              <td class="num mono">${formatMoney(ctDollarPt)}</td>
+              <td class="num mono">${ctPts.toFixed(2)}</td>
+              <td class="num mono" style="font-weight:700;">${formatPrice(ctTickTp, tick)}</td>
+            </tr>`;
+          })
+          .join('');
+      }
+
+      // Event Listeners
+      instPills.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const inst = btn.getAttribute('data-inst');
+          state.instrument = inst;
+          if (PRESETS[inst]) {
+            state.commPerContract = PRESETS[inst].defComm.toFixed(2);
+          }
+          syncInputsFromState();
+          calculate();
+        });
+      });
+
+      customPtValInput.addEventListener('input', (e) => {
+        state.customPtVal = e.target.value;
+        calculate();
+      });
+
+      customTickSizeInput.addEventListener('input', (e) => {
+        state.customTickSize = e.target.value;
+        calculate();
+      });
+
+      buyBtn.addEventListener('click', () => {
+        state.direction = 'buy';
+        syncInputsFromState();
+        calculate();
+      });
+
+      sellBtn.addEventListener('click', () => {
+        state.direction = 'sell';
+        syncInputsFromState();
+        calculate();
+      });
+
+      currentBalInput.addEventListener('input', (e) => {
+        state.currentBal = e.target.value;
+        calculate();
+      });
+
+      targetBalInput.addEventListener('input', (e) => {
+        state.targetBal = e.target.value;
+        calculate();
+      });
+
+      qtBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const add = parseFloat(btn.getAttribute('data-add-bal')) || 0;
+          const base = parseFloat(state.currentBal) || 0;
+          state.targetBal = (base + add).toFixed(2).replace(/\.00$/, '');
+          targetBalInput.value = state.targetBal;
+          calculate();
+        });
+      });
+
+      entryPriceInput.addEventListener('input', (e) => {
+        state.entryPrice = e.target.value;
+        calculate();
+      });
+
+      contractsInput.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        state.contracts = Number.isFinite(val) && val > 0 ? val : 1;
+        calculate();
+      });
+
+      decContractBtn.addEventListener('click', () => {
+        state.contracts = Math.max(1, (parseInt(state.contracts, 10) || 1) - 1);
+        contractsInput.value = state.contracts;
+        calculate();
+      });
+
+      incContractBtn.addEventListener('click', () => {
+        state.contracts = (parseInt(state.contracts, 10) || 1) + 1;
+        contractsInput.value = state.contracts;
+        calculate();
+      });
+
+      slPointsInput.addEventListener('input', (e) => {
+        state.slPoints = e.target.value;
+        calculate();
+      });
+
+      futCheckPriceInput.addEventListener('input', (e) => {
+        state.checkPrice = e.target.value;
+        calculate();
+      });
+
+      includeFeesCheck.addEventListener('change', (e) => {
+        state.includeFees = e.target.checked;
+        commPerContractInput.disabled = !state.includeFees;
+        calculate();
+      });
+
+      commPerContractInput.addEventListener('input', (e) => {
+        state.commPerContract = e.target.value;
+        calculate();
+      });
+
+      copyTpBtn.addEventListener('click', () => {
+        if (!lastCopyValue) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(lastCopyValue).then(
+            () => showToast('Copied TP: ' + lastCopyValue),
+            () => fallbackCopy(lastCopyValue)
+          );
+        } else {
+          fallbackCopy(lastCopyValue);
+        }
+      });
+
+      function fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast('Copied TP: ' + text);
+        } catch (err) {
+          showToast('Copy failed');
+        }
+        document.body.removeChild(ta);
+      }
+
+      resetBtn.addEventListener('click', () => {
+        state = defaultState();
+        syncInputsFromState();
+        calculate();
+        showToast('Reset to defaults');
+      });
+
+      window.addEventListener('pagehide', saveState);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') saveState();
+      });
+
+      function preprocessFutImage(file) {
+        return new Promise((resolve) => {
+          const img = new Image();
+          const url = URL.createObjectURL(file);
+          img.onload = () => {
+            try {
+              const scale = img.width < 1200 ? 2 : 1;
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width * scale;
+              canvas.height = img.height * scale;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              const d = imgData.data;
+              let lumSum = 0, samples = 0;
+              for (let i = 0; i < d.length; i += 64) {
+                lumSum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                samples++;
+              }
+              const isDark = samples > 0 && lumSum / samples < 128;
+              for (let i = 0; i < d.length; i += 4) {
+                let gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                if (isDark) gray = 255 - gray;
+                gray = Math.min(255, Math.max(0, (gray - 128) * 1.35 + 128));
+                d[i] = d[i + 1] = d[i + 2] = gray;
+              }
+              ctx.putImageData(imgData, 0, 0);
+              URL.revokeObjectURL(url);
+              resolve(canvas);
+            } catch (e) {
+              URL.revokeObjectURL(url);
+              resolve(file);
+            }
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve(file);
+          };
+          img.src = url;
+        });
+      }
+
+      function reconstructFutRows(ocrData) {
+        const words = ocrData && Array.isArray(ocrData.words) ? ocrData.words : [];
+        if (words.length === 0) return ocrData && ocrData.text ? ocrData.text : '';
+        const items = words
+          .filter((w) => w && w.text && w.bbox)
+          .map((w) => ({
+            text: w.text.trim(),
+            x: w.bbox.x0,
+            y: (w.bbox.y0 + w.bbox.y1) / 2,
+            h: Math.max(8, w.bbox.y1 - w.bbox.y0)
+          }))
+          .filter((w) => w.text.length > 0)
+          .sort((a, b) => a.y - b.y || a.x - b.x);
+
+        const rows = [];
+        for (const item of items) {
+          const tol = Math.max(10, item.h * 0.6);
+          let row = rows.find((r) => Math.abs(r.y - item.y) <= tol);
+          if (!row) {
+            row = { y: item.y, words: [] };
+            rows.push(row);
+          }
+          row.words.push(item);
+        }
+        return rows.map((r) => r.words.sort((a, b) => a.x - b.x).map((w) => w.text).join(' ')).join('\n');
+      }
+
+      function parseTradovatePositionOcr(rawText) {
+        const cleaned = String(rawText || '').replace(/(\d),(\d{3})/g, '$1$2');
+        const lines = cleaned.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+
+        let instrument = null;
+        if (/\bMGC[A-Z]\d{1,2}\b|micro\s*gold/i.test(cleaned)) instrument = 'MGC';
+        else if (/\bMNQ[A-Z]\d{1,2}\b|micro\s*nasdaq/i.test(cleaned)) instrument = 'MNQ';
+        else if (/\bMES[A-Z]\d{1,2}\b|micro\s*s\s*&?\s*p/i.test(cleaned)) instrument = 'MES';
+        else if (/\bGC[A-Z]\d{1,2}\b|\bgold\s*futures/i.test(cleaned)) instrument = 'GC';
+        else if (/\bNQ[A-Z]\d{1,2}\b|nasdaq/i.test(cleaned)) instrument = 'NQ';
+        else if (/\bES[A-Z]\d{1,2}\b|s\s*&?\s*p/i.test(cleaned)) instrument = 'ES';
+
+        let equity = null;
+        for (let i = 0; i < lines.length; i++) {
+          if (/\bequity\b/i.test(lines[i])) {
+            const sameLine = lines[i].match(/\bequity(?:\s+profit)?[:\s]*([\d]+\.\d{1,2})/i);
+            if (sameLine) {
+              equity = sameLine[1];
+              break;
+            }
+            if (lines[i + 1]) {
+              const nextLine = lines[i + 1].match(/^\s*([\d]+\.\d{1,2})\b/);
+              if (nextLine) {
+                equity = nextLine[1];
+                break;
+              }
+            }
+          }
+        }
+
+        let direction = null;
+        const sideM = cleaned.match(/\bside\s+(short|sell|long|buy)\b/i);
+        if (sideM) {
+          direction = /short|sell/i.test(sideM[1]) ? 'sell' : 'buy';
+        }
+
+        let qty = null;
+        const qtyM = cleaned.match(/\bqty\s+(\d+)\b/i);
+        if (qtyM) qty = parseInt(qtyM[1], 10);
+
+        let entryPrice = null;
+        const entryM = cleaned.match(/\b(?:avg\s*fill\s*price|fill\s*price|avg\s*price)\s+([\d]+(?:\.\d+)?)\b/i);
+        if (entryM) entryPrice = entryM[1];
+
+        return { instrument, equity, direction, qty, entryPrice };
+      }
+
+      async function handleFutScreenshot(file) {
+        if (!file || !file.type.startsWith('image/')) {
+          showToast('Please select an image file');
+          return;
+        }
+        futDropIdle.classList.add('hidden');
+        futDropStatus.classList.remove('hidden');
+        futDropStatusText.style.color = '#60a5fa';
+        futDropStatusText.textContent = 'Scanning Tradovate screenshot...';
+        futDropSubText.textContent = file.name;
+
+        try {
+          if (typeof Tesseract === 'undefined') throw new Error('OCR unavailable');
+          const canvas = await preprocessFutImage(file);
+          const result = await Tesseract.recognize(canvas, 'eng');
+          const rowText = reconstructFutRows(result.data) || (result.data && result.data.text) || '';
+          const parsed = parseTradovatePositionOcr(rowText);
+
+          let updated = [];
+          if (parsed.instrument && PRESETS[parsed.instrument]) {
+            state.instrument = parsed.instrument;
+            state.commPerContract = PRESETS[parsed.instrument].defComm.toFixed(2);
+            updated.push(parsed.instrument);
+          }
+          if (parsed.direction) {
+            state.direction = parsed.direction;
+            updated.push(parsed.direction === 'sell' ? 'SELL' : 'BUY');
+          }
+          if (parsed.qty && parsed.qty > 0) {
+            state.contracts = parsed.qty;
+            updated.push(parsed.qty + ' ct');
+          }
+          if (parsed.entryPrice) {
+            state.entryPrice = parsed.entryPrice;
+            updated.push('@ ' + parsed.entryPrice);
+          }
+          if (parsed.equity) {
+            state.currentBal = parsed.equity;
+            updated.push('Eq $' + parsed.equity);
+          }
+
+          if (updated.length > 0) {
+            syncInputsFromState();
+            calculate();
+            futDropStatusText.style.color = '#34d399';
+            futDropStatusText.textContent = 'Loaded: ' + updated.join(' · ');
+            futDropSubText.textContent = 'Tap to scan another screenshot';
+            showToast('Filled from screenshot');
+          } else {
+            futDropStatusText.style.color = '#fbbf24';
+            futDropStatusText.textContent = 'No Tradovate position fields detected';
+            futDropSubText.textContent = 'Tap to retry or enter manually below';
+          }
+        } catch (err) {
+          futDropStatusText.style.color = '#f87171';
+          futDropStatusText.textContent = 'Could not read screenshot';
+          futDropSubText.textContent = 'Tap to retry or enter manually below';
+        }
+      }
+
+      futScreenshotInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          handleFutScreenshot(e.target.files[0]);
+          e.target.value = '';
+        }
+      });
+      futDropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        futDropzone.classList.add('active-drop');
+      });
+      futDropzone.addEventListener('dragleave', () => futDropzone.classList.remove('active-drop'));
+      futDropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        futDropzone.classList.remove('active-drop');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleFutScreenshot(e.dataTransfer.files[0]);
+        }
+      });
+
+      // Init
+      syncInputsFromState();
+      calculate();
+    
+    })();
+  </script>
+</body>
+</html>
